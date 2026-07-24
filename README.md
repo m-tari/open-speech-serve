@@ -28,24 +28,51 @@ make server          # in one terminal (or: docker compose up -d server)
 make ttfs
 ```
 
-## GPU (rented L4)
+## GPU (rented L4 / RunPod)
 
-GPU settings live in `docker-compose.gpu.yml` (overlay).
+Needs a GPU machine with Docker and the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) (e.g. a RunPod L4 pod). Expose port `8000` on the pod if you want the streaming server reachable from outside.
+
+1. **Clone and enter the repo**
+
+```bash
+git clone https://github.com/m-tari/open-speech-serve.git
+cd open-speech-serve
+```
+
+2. **Confirm the GPU is visible**
+
+```bash
+nvidia-smi
+```
+
+3. **Build the GPU image**
 
 ```bash
 make gpu-build
-make gpu-prepare                 # LibriSpeech n=25; override with N=50
+```
+
+4. **Prepare data** (LibriSpeech; default `n=25`)
+
+```bash
+make gpu-prepare                 # override sample count with N=50
+```
+
+5. **Run a cell** (or the full sweep)
+
+```bash
 make gpu-cell                    # default: configs/cells/fw_turbo_l4_c1.yaml
 make gpu-cell CELL=configs/cells/hf_turbo_l4_c8.yaml
 make gpu-sweep                   # full 6-cell v1 matrix
 ```
 
-Streaming on GPU:
+6. **Optional — streaming server + TTFS** (two terminals)
 
 ```bash
-make gpu-server
-make gpu-ttfs
+make gpu-server                  # terminal 1 — listens on :8000
+make gpu-ttfs                    # terminal 2
 ```
+
+Results land in `./results`; data in `./data`.
 
 ## Layout
 
