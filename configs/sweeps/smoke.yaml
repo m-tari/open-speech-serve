@@ -1,0 +1,6 @@
+# Offline-safe CPU sweep used in Docker smoke
+name: smoke
+cells:
+  - configs/cells/smoke_mock_c1.yaml
+  - configs/cells/smoke_fw_tiny_c1.yaml
+  - configs/cells/smoke_hf_tiny_c1.yaml

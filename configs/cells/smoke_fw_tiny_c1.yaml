@@ -1,0 +1,13 @@
+# CPU smoke: faster-whisper + whisper-tiny + concurrency 1
+name: smoke_fw_tiny_c1
+framework: faster_whisper
+model: tiny
+device: cpu
+compute_type: int8
+concurrency: 1
+manifest: data/manifest.jsonl
+warmup: 1
+passes: 1
+limit: 3
+beam_size: 1
+cpu_threads: 4

@@ -1,0 +1,46 @@
+# GPU image — requires NVIDIA Container Toolkit.
+# Build: docker compose -f docker-compose.yml -f docker-compose.gpu.yml build
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/app/.cache/huggingface \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface \
+    XDG_CACHE_HOME=/app/.cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-venv \
+        python3-pip \
+        ffmpeg \
+        libsndfile1 \
+        git \
+        curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python3
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY adapters ./adapters
+COPY bench ./bench
+COPY streaming ./streaming
+COPY scripts ./scripts
+COPY configs ./configs
+COPY fixtures ./fixtures
+
+# CUDA torch wheel, then project deps (skip CPU torch from pyproject by installing
+# torch first so pip resolves the already-present package).
+RUN pip3 install --upgrade pip \
+    && pip3 install --index-url https://download.pytorch.org/whl/cu124 \
+        torch \
+    && pip3 install -e .
+
+RUN mkdir -p /app/data /app/results /app/.cache
+
+EXPOSE 8000
+
+CMD ["stream", "--host", "0.0.0.0", "--port", "8000"]

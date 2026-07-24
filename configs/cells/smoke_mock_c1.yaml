@@ -1,0 +1,10 @@
+# Plumbing-only cell (no model download)
+name: smoke_mock_c1
+framework: mock
+model: mock
+device: cpu
+concurrency: 1
+manifest: data/manifest.jsonl
+warmup: 0
+passes: 1
+limit: 5

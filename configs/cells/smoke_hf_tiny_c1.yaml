@@ -1,0 +1,12 @@
+# CPU smoke: HF Transformers + whisper-tiny + concurrency 1
+name: smoke_hf_tiny_c1
+framework: hf_transformers
+model: tiny
+device: cpu
+compute_type: float32
+concurrency: 1
+manifest: data/manifest.jsonl
+warmup: 1
+passes: 1
+limit: 3
+beam_size: 1

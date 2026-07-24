@@ -1,0 +1,10 @@
+name: hf_turbo_l4_c8
+framework: hf_transformers
+model: large-v3-turbo
+device: cuda
+compute_type: float16
+concurrency: 8
+manifest: data/manifest.jsonl
+warmup: 2
+passes: 3
+beam_size: 1

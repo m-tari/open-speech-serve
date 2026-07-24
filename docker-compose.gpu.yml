@@ -1,0 +1,13 @@
+# Overlay: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: open-speech-serve:gpu
+    gpus: all
+    environment:
+      OSS_FRAMEWORK: ${OSS_FRAMEWORK:-faster_whisper}
+      OSS_MODEL: ${OSS_MODEL:-large-v3-turbo}
+      OSS_DEVICE: cuda
+      OSS_COMPUTE_TYPE: ${OSS_COMPUTE_TYPE:-float16}
