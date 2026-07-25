@@ -39,11 +39,13 @@ def fetch_librispeech_sample(dest: Path, n: int = 25) -> list[dict]:
     ds = load_dataset(
         "openslr/librispeech_asr",
         "clean",
-        split=f"test[:{n}]",
-        trust_remote_code=True,
+        split="test",
+        streaming=True,
     )
     rows: list[dict] = []
     for i, ex in enumerate(ds):
+        if i >= n:
+            break
         audio = ex["audio"]
         arr = np.asarray(audio["array"], dtype=np.float32)
         sr = int(audio["sampling_rate"])
@@ -62,9 +64,11 @@ def fetch_librispeech_sample(dest: Path, n: int = 25) -> list[dict]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Prepare eval audio + manifest")
+    parser = argparse.ArgumentParser(
+        description="Prepare eval audio + manifest")
     parser.add_argument("--data-dir", default="data")
-    parser.add_argument("--n", type=int, default=25, help="LibriSpeech clips if available")
+    parser.add_argument("--n", type=int, default=25,
+                        help="LibriSpeech clips if available")
     parser.add_argument(
         "--tones",
         type=int,
@@ -101,7 +105,8 @@ def main() -> None:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "-q", "datasets"]
             )
-            ls_rows = fetch_librispeech_sample(data_dir / "librispeech", n=args.n)
+            ls_rows = fetch_librispeech_sample(
+                data_dir / "librispeech", n=args.n)
             rows.extend(ls_rows)
             print(f"Fetched {len(ls_rows)} LibriSpeech clips")
         except Exception as exc:  # noqa: BLE001

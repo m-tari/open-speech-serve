@@ -65,7 +65,7 @@ make gpu-cell CELL=configs/cells/hf_turbo_l4_c8.yaml
 make gpu-sweep                   # full 6-cell v1 matrix
 ```
 
-6. **Optional — streaming server + TTFS** (two terminals)
+**Optional — streaming server + TTFS** (two terminals)
 
 ```bash
 make gpu-server                  # terminal 1 — listens on :8000
