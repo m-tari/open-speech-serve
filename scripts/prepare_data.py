@@ -30,29 +30,42 @@ def fetch_librispeech_sample(dest: Path, n: int = 25) -> list[dict]:
     For v1 smoke we prefer local tones + optional HF datasets if available.
     Falls back gracefully when offline.
     """
+    import io
+
+    import soundfile as sf
+
     try:
-        from datasets import load_dataset  # type: ignore
+        from datasets import Audio, load_dataset  # type: ignore
     except ImportError:
         return []
 
     dest.mkdir(parents=True, exist_ok=True)
+    # Stream test only; decode ourselves with soundfile so we don't need torchcodec.
     ds = load_dataset(
         "openslr/librispeech_asr",
         "clean",
         split="test",
         streaming=True,
     )
+    if hasattr(ds, "decode"):
+        ds = ds.decode(False)
+    else:
+        ds = ds.cast_column("audio", Audio(decode=False))
+
     rows: list[dict] = []
     for i, ex in enumerate(ds):
         if i >= n:
             break
         audio = ex["audio"]
-        arr = np.asarray(audio["array"], dtype=np.float32)
-        sr = int(audio["sampling_rate"])
+        if audio.get("bytes"):
+            arr, sr = sf.read(io.BytesIO(audio["bytes"]), dtype="float32")
+        elif audio.get("path"):
+            arr, sr = sf.read(audio["path"], dtype="float32")
+        else:
+            raise ValueError(
+                f"LibriSpeech example {i} has no audio bytes/path")
         out = dest / f"ls_{i:04d}.wav"
-        import soundfile as sf
-
-        sf.write(str(out), arr, sr)
+        sf.write(str(out), np.asarray(arr, dtype=np.float32), int(sr))
         rows.append(
             {
                 "audio_path": str(out),
