@@ -10,6 +10,7 @@ class MockAdapter(FrameworkAdapter):
     """Deterministic no-model adapter for plumbing smoke tests."""
 
     name = "mock"
+    supports_concurrent = True
 
     def __init__(self, model: str = "mock", device: str = "cpu", **_kwargs):
         self.model = model
@@ -27,10 +28,10 @@ class MockAdapter(FrameworkAdapter):
         info = sf.info(str(audio_path))
         duration = float(info.duration)
         # Simulate a tiny fixed cost proportional to duration.
-        time.sleep(min(0.05, 0.01 * duration))
         t0 = time.perf_counter()
+        time.sleep(min(0.05, 0.01 * duration))
         text = f"mock transcript for {audio_path.name}"
-        latency = time.perf_counter() - t0 + 0.01
+        latency = time.perf_counter() - t0
         return TranscriptionResult(
             text=text,
             latency_s=latency,

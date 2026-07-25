@@ -25,6 +25,7 @@ class FrameworkAdapter(ABC):
     """One adapter per serving stack. Load once; transcribe many times."""
 
     name: str
+    supports_concurrent: bool = False
 
     @abstractmethod
     def load(self) -> None:
@@ -38,4 +39,7 @@ class FrameworkAdapter(ABC):
         """Optional teardown."""
 
     def info(self) -> dict[str, Any]:
-        return {"framework": self.name}
+        return {
+            "framework": self.name,
+            "supports_concurrent": self.supports_concurrent,
+        }

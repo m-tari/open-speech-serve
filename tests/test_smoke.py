@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bench.metrics import percentile
+from bench.metrics import RequestRecord, aggregate, percentile
 from bench.normalize import normalize_text
 from bench.wer import wer
 
@@ -31,3 +31,27 @@ def test_mock_adapter(tmp_path):
     r = a.transcribe(wav)
     assert r.audio_duration_s > 0
     assert "mock" in r.text
+
+
+def test_aggregate_reports_service_and_queue_latency():
+    records = [
+        RequestRecord(
+            audio_path="a.wav",
+            latency_s=0.3,
+            service_latency_s=0.2,
+            queue_wait_s=0.1,
+            audio_duration_s=1.0,
+            text="a",
+        ),
+        RequestRecord(
+            audio_path="b.wav",
+            latency_s=0.5,
+            service_latency_s=0.2,
+            queue_wait_s=0.3,
+            audio_duration_s=1.0,
+            text="b",
+        ),
+    ]
+    metrics = aggregate(records, wall_s=0.5)
+    assert metrics.service_latency_p50_s == 0.2
+    assert metrics.queue_wait_p50_s == 0.2

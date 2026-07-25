@@ -1,0 +1,13 @@
+name: trtllm_turbo_l4_c1_serialized
+framework: tensorrt_llm
+model: large-v3-turbo
+grpc_url: localhost:8001
+triton_model_name: whisper_bls
+device: cuda
+compute_type: float16
+dispatch_mode: serialized
+concurrency: 1
+manifest: data/manifest.jsonl
+language: en
+warmup: 2
+passes: 3

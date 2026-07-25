@@ -1,0 +1,23 @@
+ARG TRITON_IMAGE=nvcr.io/nvidia/tritonserver:26.02-trtllm-python-py3
+FROM ${TRITON_IMAGE}
+
+ARG TRTLLM_VERSION=v1.1.0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl git git-lfs libsndfile1 wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && git clone --depth 1 --branch "${TRTLLM_VERSION}" \
+        https://github.com/NVIDIA/TensorRT-LLM.git /opt/TensorRT-LLM
+
+WORKDIR /workspace/open-speech-serve
+
+COPY pyproject.toml README.md ./
+COPY adapters ./adapters
+COPY bench ./bench
+COPY streaming ./streaming
+COPY scripts ./scripts
+COPY configs ./configs
+
+RUN python3 -m pip install --no-cache-dir \
+        httpx jiwer pyyaml soundfile \
+    && python3 -m pip install --no-deps -e .

@@ -82,6 +82,7 @@ class HfTransformersAdapter(FrameworkAdapter):
     def info(self) -> dict[str, Any]:
         return {
             "framework": self.name,
+            "supports_concurrent": self.supports_concurrent,
             "model": self.model_name,
             "model_id": self.model_id,
             "device": self.device,

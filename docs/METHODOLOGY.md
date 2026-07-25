@@ -1,21 +1,44 @@
 # Methodology
 
-Compact v1 of a [whisper-serving-bench](https://github.com/dyl5051/whisper-serving-bench)-style matrix, plus one streaming TTFS cell.
+Compact [whisper-serving-bench](https://github.com/dyl5051/whisper-serving-bench)-style matrix, plus one streaming TTFS cell.
 
 ## What we measure
 
-### Offline concurrent cells (6 GPU cells)
+### Offline cells
 
-| Axis | v1 choice |
+| Axis | Choice |
 |---|---|
-| Frameworks | `hf_transformers` (no-batching baseline), `faster_whisper` (CTranslate2) |
+| Frameworks | HF Transformers, faster-whisper, vLLM, SGLang, TensorRT-LLM/Triton |
 | Model | `large-v3-turbo` on GPU; `tiny` for CPU smoke |
 | GPU | one L4 (or whatever `nvidia-smi` reports) |
 | Concurrency | 1 / 8 / 32 |
+| Dispatch | `serialized` or `concurrent` |
 | Warmup | excluded from aggregates |
 | Passes | 3; report **median** across passes |
 
-Per request we record latency, audio duration, RTF (`latency / audio_duration`), hypothesis text, and WER when a reference exists.
+Per request we record end-to-end latency, service latency, queue wait, audio
+duration, RTF (`end-to-end latency / audio duration`), hypothesis text, errors,
+and WER when a reference exists.
+
+### Dispatch semantics
+
+Both modes submit work through the same concurrent client pool:
+
+- **Serialized** holds a client-side gate around the backend call. Requests may
+  arrive concurrently, but only one reaches inference at a time. End-to-end
+  latency therefore includes queueing. This is the behavior of the original v1
+  benchmark and the only supported mode for the in-process HF/faster-whisper
+  adapters.
+- **Concurrent** removes that gate and sends simultaneous requests to a remote
+  server. vLLM, SGLang, and Triton may batch, schedule, or queue them internally.
+
+`service_latency_s` is measured inside the adapter call. `queue_wait_s` is
+`end_to_end - service`, clamped to zero. For remote clients, service latency
+includes HTTP/gRPC transport; server-only compute time is not claimed.
+
+Concurrency 1 is the common baseline. At concurrency 8/32, compare paired
+serialized/concurrent cells for the same remote framework. Do not interpret the
+serialized HF/faster-whisper cells as dynamic batching.
 
 ### Streaming TTFS cell
 
@@ -28,7 +51,8 @@ This is **chunked re-decode**, not incremental encoder-state streaming. That lim
 ## What we are not measuring
 
 - True causal / duplex streaming with incremental decoder state
-- Continuous batching across streams (neither HF nor vanilla faster-whisper does this well)
+- Server-internal compute time isolated from transport
+- Cross-framework TTFS for the remote servers
 - Absolute SOTA WER (weights held constant across frameworks)
 - Cost-per-audio-hour across cloud SKUs (can add in v1.1)
 
@@ -38,7 +62,20 @@ Shared lowercasing + punctuation strip before WER (`bench/normalize.py`). Identi
 
 ## Environment capture
 
-Every result JSON includes hostname, Python version, git SHA, GPU name, and the resolved cell config.
+Every result JSON includes hostname, Python version, git SHA, GPU name, resolved
+cell config, adapter/server identity, dispatch mode, and per-request records.
+
+## Fairness controls
+
+- Exact `openai/whisper-large-v3-turbo` weights (TensorRT uses the equivalent
+  OpenAI checkpoint)
+- FP16, English transcription, greedy decoding / beam width 1
+- Same 16 kHz WAV manifest, references, warmup, passes, and one L4
+- Same client-side latency boundary and text normalization
+
+SGLang's Whisper path is experimental; publish its WER beside performance.
+TensorRT engines are GPU-architecture and TensorRT-version specific and must be
+built on the target runtime.
 
 ## Reproduce
 
@@ -51,4 +88,8 @@ make gpu-build
 make gpu-prepare
 make gpu-cell CELL=configs/cells/fw_turbo_l4_c1.yaml
 make gpu-sweep
+
+# Remote serving cells (server and client in separate terminals)
+make vllm-up
+make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
 ```

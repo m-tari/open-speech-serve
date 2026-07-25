@@ -21,8 +21,11 @@ def main() -> None:
         json.dumps(
             {
                 "cell": payload["cell"],
+                "dispatch_mode": s["dispatch_mode"],
                 "latency_p50_s": s["latency_p50_s"],
                 "latency_p95_s": s["latency_p95_s"],
+                "service_latency_p50_s": s["service_latency_p50_s"],
+                "queue_wait_p50_s": s["queue_wait_p50_s"],
                 "rtf_p50": s["rtf_p50"],
                 "throughput": s["throughput_audio_s_per_wall_s"],
                 "wer_pooled": s["wer_pooled"],

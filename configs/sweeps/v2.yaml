@@ -1,0 +1,22 @@
+# Full remote matrix. Requires all three endpoints; on one L4, run the
+# backend-specific v2_* sweep files in separate sessions instead.
+name: v2_remote_full
+cells:
+  - configs/cells/vllm_turbo_l4_c1_serialized.yaml
+  - configs/cells/vllm_turbo_l4_c8_serialized.yaml
+  - configs/cells/vllm_turbo_l4_c32_serialized.yaml
+  - configs/cells/vllm_turbo_l4_c1_concurrent.yaml
+  - configs/cells/vllm_turbo_l4_c8_concurrent.yaml
+  - configs/cells/vllm_turbo_l4_c32_concurrent.yaml
+  - configs/cells/sglang_turbo_l4_c1_serialized.yaml
+  - configs/cells/sglang_turbo_l4_c8_serialized.yaml
+  - configs/cells/sglang_turbo_l4_c32_serialized.yaml
+  - configs/cells/sglang_turbo_l4_c1_concurrent.yaml
+  - configs/cells/sglang_turbo_l4_c8_concurrent.yaml
+  - configs/cells/sglang_turbo_l4_c32_concurrent.yaml
+  - configs/cells/trtllm_turbo_l4_c1_serialized.yaml
+  - configs/cells/trtllm_turbo_l4_c8_serialized.yaml
+  - configs/cells/trtllm_turbo_l4_c32_serialized.yaml
+  - configs/cells/trtllm_turbo_l4_c1_concurrent.yaml
+  - configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
+  - configs/cells/trtllm_turbo_l4_c32_concurrent.yaml

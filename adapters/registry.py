@@ -4,6 +4,7 @@ from adapters.base import FrameworkAdapter
 from adapters.faster_whisper import FasterWhisperAdapter
 from adapters.hf_transformers import HfTransformersAdapter
 from adapters.mock import MockAdapter
+from adapters.openai_transcription import OpenAITranscriptionAdapter
 
 
 def get_adapter(
@@ -24,7 +25,24 @@ def get_adapter(
         )
     if key == "mock":
         return MockAdapter(model=model, device=device)
+    if key in {"vllm", "v_llm"}:
+        return OpenAITranscriptionAdapter(
+            model=model,
+            framework_name="vllm",
+            **kwargs,
+        )
+    if key in {"sglang", "sgl"}:
+        return OpenAITranscriptionAdapter(
+            model=model,
+            framework_name="sglang",
+            **kwargs,
+        )
+    if key in {"tensorrt_llm", "tensorrt", "triton", "trtllm"}:
+        from adapters.triton_whisper import TritonWhisperAdapter
+
+        return TritonWhisperAdapter(model=model, **kwargs)
     raise ValueError(
         f"Unknown framework {framework!r}. "
-        "Choose: faster_whisper | hf_transformers | mock"
+        "Choose: faster_whisper | hf_transformers | vllm | sglang | "
+        "tensorrt_llm | mock"
     )

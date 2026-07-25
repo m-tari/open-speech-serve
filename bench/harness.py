@@ -65,6 +65,13 @@ def load_cell_config(path: Path) -> dict[str, Any]:
     missing = required - set(cfg)
     if missing:
         raise ValueError(f"Cell config missing keys {missing}: {path}")
+    dispatch_mode = cfg.get("dispatch_mode", "serialized")
+    if dispatch_mode not in {"serialized", "concurrent"}:
+        raise ValueError(
+            f"Invalid dispatch_mode {dispatch_mode!r}: choose serialized or concurrent"
+        )
+    if int(cfg["concurrency"]) < 1:
+        raise ValueError("concurrency must be >= 1")
     return cfg
 
 
@@ -74,6 +81,7 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
     warmup = int(cfg.get("warmup", 2))
     passes = int(cfg.get("passes", 3))
     concurrency = int(cfg["concurrency"])
+    dispatch_mode = cfg.get("dispatch_mode", "serialized")
     limit = cfg.get("limit")
 
     manifest_path = Path(cfg["manifest"])
@@ -83,25 +91,45 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
     if not items:
         raise RuntimeError(f"Empty manifest: {manifest_path}")
 
+    reserved = {
+        "name", "framework", "model", "device", "compute_type", "concurrency",
+        "manifest", "warmup", "passes", "limit", "dispatch_mode",
+    }
+    adapter_options = {k: v for k, v in cfg.items() if k not in reserved}
+    if os.environ.get("OSS_BASE_URL"):
+        adapter_options["base_url"] = os.environ["OSS_BASE_URL"]
+    if os.environ.get("OSS_GRPC_URL"):
+        adapter_options["grpc_url"] = os.environ["OSS_GRPC_URL"]
     adapter = get_adapter(
         cfg["framework"],
         model=cfg["model"],
         device=device,
         compute_type=compute_type,
-        beam_size=int(cfg.get("beam_size", 1)),
-        cpu_threads=int(cfg.get("cpu_threads", 4)),
+        **adapter_options,
     )
     adapter.load()
 
     # Warmup — excluded from aggregates.
     warmup_items = items[: min(warmup, len(items))]
     if warmup_items:
-        timed_load(adapter, warmup_items, concurrency=1, pass_idx=-1)
+        timed_load(
+            adapter,
+            warmup_items,
+            concurrency=1,
+            pass_idx=-1,
+            dispatch_mode="serialized",
+        )
 
     all_records: list[RequestRecord] = []
     pass_metrics: list[AggregateMetrics] = []
     for p in range(passes):
-        records, wall = timed_load(adapter, items, concurrency, pass_idx=p)
+        records, wall = timed_load(
+            adapter,
+            items,
+            concurrency,
+            pass_idx=p,
+            dispatch_mode=dispatch_mode,
+        )
         all_records.extend(records)
         pass_metrics.append(aggregate(records, wall))
 
@@ -118,6 +146,10 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
         "latency_p50_s": _median("latency_p50_s"),
         "latency_p95_s": _median("latency_p95_s"),
         "latency_p99_s": _median("latency_p99_s"),
+        "service_latency_p50_s": _median("service_latency_p50_s"),
+        "service_latency_p95_s": _median("service_latency_p95_s"),
+        "queue_wait_p50_s": _median("queue_wait_p50_s"),
+        "queue_wait_p95_s": _median("queue_wait_p95_s"),
         "rtf_p50": _median("rtf_p50"),
         "throughput_audio_s_per_wall_s": _median("throughput_audio_s_per_wall_s"),
         "wer_pooled": _median("wer_pooled") if any(m.wer_pooled is not None for m in pass_metrics) else None,
@@ -125,12 +157,20 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
         "passes": passes,
         "warmup": warmup,
         "concurrency": concurrency,
+        "dispatch_mode": dispatch_mode,
     }
 
     cell_name = cfg.get("name") or f"{adapter.name}_{cfg['model']}_c{concurrency}"
+    if "dispatch_mode" in cfg and not str(cell_name).endswith(f"_{dispatch_mode}"):
+        cell_name = f"{cell_name}_{dispatch_mode}"
     payload = {
         "cell": cell_name,
-        "config": {**cfg, "device": device, "compute_type": compute_type},
+        "config": {
+            **cfg,
+            "device": device,
+            "compute_type": compute_type,
+            "dispatch_mode": dispatch_mode,
+        },
         "adapter": adapter.info(),
         "env": capture_env(),
         "summary": summary,
@@ -144,4 +184,5 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
     out.write_text(json.dumps(payload, indent=2))
     # Also write a stable "latest" pointer for the cell.
     (results_dir / f"{cell_name}_latest.json").write_text(json.dumps(payload, indent=2))
+    adapter.unload()
     return payload

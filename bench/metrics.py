@@ -26,6 +26,8 @@ class RequestRecord:
     latency_s: float
     audio_duration_s: float
     text: str
+    service_latency_s: float | None = None
+    queue_wait_s: float | None = None
     reference: str | None = None
     wer: float | None = None
     error: str | None = None
@@ -47,6 +49,10 @@ class AggregateMetrics:
     latency_p95_s: float
     latency_p99_s: float
     latency_mean_s: float
+    service_latency_p50_s: float
+    service_latency_p95_s: float
+    queue_wait_p50_s: float
+    queue_wait_p95_s: float
     rtf_p50: float
     rtf_mean: float
     throughput_audio_s_per_wall_s: float
@@ -61,6 +67,10 @@ class AggregateMetrics:
 def aggregate(records: list[RequestRecord], wall_s: float) -> AggregateMetrics:
     ok = [r for r in records if r.error is None]
     latencies = [r.latency_s for r in ok]
+    service_latencies = [
+        r.service_latency_s for r in ok if r.service_latency_s is not None
+    ]
+    queue_waits = [r.queue_wait_s for r in ok if r.queue_wait_s is not None]
     rtfs = [r.rtf for r in ok]
     audio_total = sum(r.audio_duration_s for r in ok)
     wers = [r.wer for r in ok if r.wer is not None]
@@ -79,6 +89,10 @@ def aggregate(records: list[RequestRecord], wall_s: float) -> AggregateMetrics:
         latency_p95_s=percentile(latencies, 95),
         latency_p99_s=percentile(latencies, 99),
         latency_mean_s=statistics.fmean(latencies) if latencies else float("nan"),
+        service_latency_p50_s=percentile(service_latencies, 50),
+        service_latency_p95_s=percentile(service_latencies, 95),
+        queue_wait_p50_s=percentile(queue_waits, 50),
+        queue_wait_p95_s=percentile(queue_waits, 95),
         rtf_p50=percentile(rtfs, 50),
         rtf_mean=statistics.fmean(rtfs) if rtfs else float("nan"),
         throughput_audio_s_per_wall_s=(audio_total / wall_s) if wall_s > 0 else 0.0,

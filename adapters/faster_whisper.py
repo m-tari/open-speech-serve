@@ -67,6 +67,7 @@ class FasterWhisperAdapter(FrameworkAdapter):
     def info(self) -> dict[str, Any]:
         return {
             "framework": self.name,
+            "supports_concurrent": self.supports_concurrent,
             "model": self.model_name,
             "device": self.device,
             "compute_type": self.compute_type,

@@ -21,6 +21,8 @@ def main() -> None:
         data = json.loads(path.read_text())
         s = data.get("summary", {})
         cfg = data.get("config", {})
+        if not cfg:
+            continue
         rows.append(
             {
                 "cell": data.get("cell"),
@@ -28,8 +30,11 @@ def main() -> None:
                 "model": cfg.get("model"),
                 "device": cfg.get("device"),
                 "concurrency": cfg.get("concurrency"),
+                "dispatch_mode": cfg.get("dispatch_mode", "serialized"),
                 "latency_p50_s": s.get("latency_p50_s"),
                 "latency_p95_s": s.get("latency_p95_s"),
+                "service_p50_s": s.get("service_latency_p50_s"),
+                "queue_p50_s": s.get("queue_wait_p50_s"),
                 "rtf_p50": s.get("rtf_p50"),
                 "throughput": s.get("throughput_audio_s_per_wall_s"),
                 "wer_pooled": s.get("wer_pooled"),
@@ -38,12 +43,13 @@ def main() -> None:
         )
 
     # Markdown table for README paste.
-    print("| cell | framework | model | conc | p50 (s) | p95 (s) | RTF p50 | throughput | WER |")
-    print("|---|---|---|---:|---:|---:|---:|---:|---:|")
+    print("| cell | framework | mode | conc | e2e p50 | service p50 | queue p50 | p95 | RTF | throughput | WER |")
+    print("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
     for r in rows:
         print(
-            f"| {r['cell']} | {r['framework']} | {r['model']} | {r['concurrency']} | "
-            f"{_fmt(r['latency_p50_s'])} | {_fmt(r['latency_p95_s'])} | "
+            f"| {r['cell']} | {r['framework']} | {r['dispatch_mode']} | {r['concurrency']} | "
+            f"{_fmt(r['latency_p50_s'])} | {_fmt(r['service_p50_s'])} | "
+            f"{_fmt(r['queue_p50_s'])} | {_fmt(r['latency_p95_s'])} | "
             f"{_fmt(r['rtf_p50'])} | {_fmt(r['throughput'])} | {_fmt(r['wer_pooled'])} |"
         )
 
