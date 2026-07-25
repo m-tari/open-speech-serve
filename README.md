@@ -74,6 +74,16 @@ make gpu-ttfs                    # terminal 2
 
 Results land in `./results`; data in `./data`.
 
+Plot CUDA cell results (writes `results/published/gpu_sweep.png` + `.md`):
+
+```bash
+pip install -e .
+plot
+# or: make plot
+```
+
+Published plots: [results/published/gpu_sweep.md](results/published/gpu_sweep.md).
+
 ## Layout
 
 ```
@@ -81,8 +91,9 @@ adapters/     # FrameworkAdapter: hf_transformers, faster_whisper, mock
 bench/        # manifest, normalize, WER, metrics, loadgen, harness
 streaming/    # FastAPI WebSocket server + TTFS client
 configs/      # cell YAMLs + sweeps
-scripts/      # prepare_data, run_cell, run_sweep, analyze
+scripts/      # prepare_data, run_cell, run_sweep, analyze, plot_results
 docs/         # METHODOLOGY.md
+results/published/  # committed plots + summary
 ```
 
 ## Metrics

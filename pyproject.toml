@@ -18,6 +18,7 @@ dependencies = [
   "torch>=2.2.0",
   "transformers>=4.40.0",
   "jiwer>=3.0.0",
+  "matplotlib>=3.8.0",
 ]
 
 [project.optional-dependencies]
@@ -28,6 +29,7 @@ prepare = "scripts.prepare_data:main"
 cell = "scripts.run_cell:main"
 sweep = "scripts.run_sweep:main"
 analyze = "scripts.analyze:main"
+plot = "scripts.plot_results:main"
 stream = "streaming.server:main"
 ttfs = "streaming.ttfs_client:main"
 

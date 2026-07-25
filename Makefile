@@ -4,7 +4,7 @@ CELL ?= configs/cells/fw_turbo_l4_c1.yaml
 SWEEP ?= configs/sweeps/v1.yaml
 N ?= 25
 
-.PHONY: build prepare smoke mock server ttfs analyze \
+.PHONY: build prepare smoke mock server ttfs analyze plot \
 	gpu-build gpu-prepare gpu-cell gpu-sweep gpu-server gpu-ttfs
 
 build:
@@ -29,6 +29,9 @@ ttfs:
 
 analyze:
 	docker compose run --rm --entrypoint analyze server
+
+plot:
+	plot --results-dir results --out-dir results/published
 
 # GPU overlay (docker-compose.gpu.yml) — rented L4 path
 gpu-build:
