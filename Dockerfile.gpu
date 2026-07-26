@@ -38,7 +38,8 @@ COPY fixtures ./fixtures
 RUN pip3 install --upgrade pip \
     && pip3 install --index-url https://download.pytorch.org/whl/cu124 \
         torch \
-    && pip3 install -e .
+    && pip3 install -e . \
+    && pip3 install "datasets>=2.19.0"
 
 RUN mkdir -p /app/data /app/results /app/.cache
 

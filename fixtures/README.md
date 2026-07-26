@@ -2,9 +2,10 @@
 
 Synthetic audio helpers. `prepare` writes `data/tone16k.wav` and `data/tones/*.wav` for offline smoke tests.
 
-Optional LibriSpeech clips:
+Optional LibriSpeech clips via Hugging Face `datasets`:
 
 ```bash
-make gpu-prepare          # or: make prepare  (tones only, CPU image)
-# LibriSpeech: make gpu-prepare N=25
+make gpu-build            # image includes datasets
+make gpu-prepare          # tones + LibriSpeech; override with N=25
+make prepare              # tones only (CPU image)
 ```
