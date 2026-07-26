@@ -10,17 +10,18 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TRANSFORMERS_CACHE=/app/.cache/huggingface \
     XDG_CACHE_HOME=/app/.cache
 
+# Ubuntu 22.04 ships Python 3.10; do not pin python3.12 (not in default apt).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.12 \
-        python3.12-venv \
+        python3 \
+        python3-venv \
         python3-pip \
         ffmpeg \
         libsndfile1 \
         git \
         curl \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
-    && ln -sf /usr/bin/python3.12 /usr/local/bin/python3
+    && ln -sf /usr/bin/python3 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python3
 
 WORKDIR /app
 
