@@ -8,7 +8,7 @@ N="${N:-25}"
 RESULTS_DIR="${RESULTS_DIR:-results/v2_comparison}"
 SKIP_PREP="${SKIP_PREP:-0}"
 SKIP_TRT_PREP="${SKIP_TRT_PREP:-0}"
-COMPOSE=(docker compose -f docker-compose.backends.yml)
+DOCKER=(./scripts/docker.sh)
 
 case "${RESULTS_DIR}" in
   results | results/*) ;;
@@ -21,9 +21,7 @@ esac
 mkdir -p "${RESULTS_DIR}"
 
 cleanup() {
-  "${COMPOSE[@]}" \
-    --profile vllm --profile sglang --profile triton \
-    down --remove-orphans >/dev/null 2>&1 || true
+  "${DOCKER[@]}" stop-backends >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 trap 'exit 130' INT TERM
@@ -65,8 +63,8 @@ run_remote_cells() {
   done
 }
 
-echo "== Preparing benchmark client and data =="
-"${COMPOSE[@]}" --profile vllm build bench-client
+echo "== Preparing Docker images and data =="
+"${DOCKER[@]}" build-bench
 if [[ "${SKIP_PREP}" != "1" ]]; then
   make gpu-build
   make gpu-prepare N="${N}"
@@ -77,34 +75,31 @@ make gpu-sweep \
   SWEEP="configs/sweeps/v1.yaml --results-dir ${RESULTS_DIR}"
 
 echo "== Running vLLM concurrent cells =="
-"${COMPOSE[@]}" --profile vllm up -d vllm
+"${DOCKER[@]}" up-vllm
 wait_http "http://127.0.0.1:8001/health" "vLLM"
 run_remote_cells "vllm-cell" "vllm_turbo_l4"
-"${COMPOSE[@]}" --profile vllm stop vllm
-"${COMPOSE[@]}" --profile vllm rm -f vllm
+"${DOCKER[@]}" stop-vllm
 
 echo "== Running SGLang concurrent cells =="
-"${COMPOSE[@]}" --profile sglang up -d sglang
+"${DOCKER[@]}" up-sglang
 wait_http "http://127.0.0.1:8002/v1/models" "SGLang"
 run_remote_cells "sglang-cell" "sglang_turbo_l4"
-"${COMPOSE[@]}" --profile sglang stop sglang
-"${COMPOSE[@]}" --profile sglang rm -f sglang
+"${DOCKER[@]}" stop-sglang
 
 echo "== Preparing and running TensorRT-LLM/Triton cells =="
 if [[ "${SKIP_TRT_PREP}" != "1" ]]; then
   make triton-prepare
 fi
-"${COMPOSE[@]}" --profile triton up -d triton
+"${DOCKER[@]}" up-triton
 wait_http "http://127.0.0.1:8003/v2/health/ready" "Triton"
 run_remote_cells "triton-cell" "trtllm_turbo_l4"
-"${COMPOSE[@]}" --profile triton stop triton
-"${COMPOSE[@]}" --profile triton rm -f triton
+"${DOCKER[@]}" stop-triton
 
 echo "== Writing comparison summary and plots =="
-"${COMPOSE[@]}" --profile vllm run --rm bench-client \
-  analyze --results-dir "${RESULTS_DIR}" >"${RESULTS_DIR}/summary.md"
-"${COMPOSE[@]}" --profile vllm run --rm bench-client \
-  plot --results-dir "${RESULTS_DIR}" \
+"${DOCKER[@]}" run-bench -- analyze --results-dir "${RESULTS_DIR}" \
+  >"${RESULTS_DIR}/summary.md"
+"${DOCKER[@]}" run-bench -- plot \
+  --results-dir "${RESULTS_DIR}" \
   --out-dir "${RESULTS_DIR}/published"
 
 echo "v2 comparison complete:"

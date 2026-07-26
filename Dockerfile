@@ -1,4 +1,4 @@
-# CPU / smoke image (Python 3.12). For GPU runs use docker-compose.gpu.yml.
+# CPU / smoke image (Python 3.12). For GPU: ./scripts/docker.sh build-gpu
 FROM python:3.12-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

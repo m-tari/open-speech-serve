@@ -1,8 +1,10 @@
 # RunPod (no nested Docker)
 
-RunPod starts a Pod as a container, so `docker compose` and the `make *-up`
-targets do not run inside it. Use a custom template for one backend, then run
-the benchmark client in another shell in that same Pod.
+RunPod starts a Pod as a container, so nested Docker (`make vllm-up`,
+`make v2-comparison`) usually does not work inside it. Use a custom template
+for one backend, then run the benchmark client in another shell in that same
+Pod. On a real Docker GPU VM (not nested), use plain `docker` via
+`make v2-comparison` — Compose is not required.
 
 Use one NVIDIA L4, at least 50 GB container disk, and a persistent network
 volume mounted at `/workspace`. Do not expose backend ports unless a client

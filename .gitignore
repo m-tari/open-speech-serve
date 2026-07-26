@@ -13,6 +13,7 @@ results/*
 !results/.gitkeep
 !results/published/
 artifacts/
+.cache/
 *.wav
 !fixtures/*.wav
 .DS_Store

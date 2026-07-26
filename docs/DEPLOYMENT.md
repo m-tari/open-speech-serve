@@ -4,11 +4,17 @@ The v2 benchmark uses a lightweight benchmark client and one isolated GPU
 backend. Do not install vLLM, SGLang, and TensorRT-LLM into one Python
 environment: their pinned Torch/CUDA stacks differ.
 
+All Docker workflows use plain `docker` via [`scripts/docker.sh`](../scripts/docker.sh)
+— **Compose is not required**.
+
 ## Docker GPU VM
 
-Requirements: x86_64 Linux, NVIDIA driver, Docker, Compose, and NVIDIA Container
-Toolkit. Confirm `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04
-nvidia-smi` succeeds.
+Requirements: x86_64 Linux, NVIDIA driver, Docker, and NVIDIA Container
+Toolkit. Confirm:
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+```
 
 Prepare the common data once:
 
@@ -35,30 +41,33 @@ Start one backend in terminal 1, then run its cells in terminal 2:
 make vllm-up
 make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_serialized.yaml
 make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
+make stop-vllm
 
 # SGLang 0.5.15 (Whisper support is experimental)
 make sglang-up
 make sglang-cell CELL=configs/cells/sglang_turbo_l4_c8_concurrent.yaml
+make stop-sglang
 
 # Triton 26.02 + TensorRT-LLM 1.1.0
 make triton-prepare       # builds L4-specific engines; run once
 make triton-up
 make triton-cell CELL=configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
+make stop-triton
 ```
 
-Stop the active profile before switching frameworks. Image tags can be
-overridden with `VLLM_IMAGE`, `SGLANG_IMAGE`, `TRITON_IMAGE`, and
-`TRTLLM_VERSION`. Record overrides with published results.
+Image tags can be overridden with `VLLM_IMAGE`, `SGLANG_IMAGE`, `TRITON_IMAGE`,
+and `TRTLLM_VERSION`. Record overrides with published results.
 
-The exposed host endpoints are:
+Host endpoints (bench client uses `--network host`):
 
-- vLLM HTTP: `8001`
-- SGLang HTTP: `8002`
-- Triton HTTP/gRPC/metrics: `8003` / `8004` / `8005`
+- vLLM HTTP: `http://127.0.0.1:8001`
+- SGLang HTTP: `http://127.0.0.1:8002`
+- Triton HTTP / gRPC / metrics: `8003` / `8004` / `8005`
 
-Inside Compose, Make targets override endpoint addresses to service DNS names.
-Direct cells default to local backend ports and can be overridden with
-`OSS_BASE_URL` or `OSS_GRPC_URL`.
+Override cell endpoints with `OSS_BASE_URL` or `OSS_GRPC_URL` if needed.
+
+HF cache is stored at `./.cache/huggingface` (host bind mount). Triton engines
+live under `./artifacts/triton`.
 
 ## TensorRT preparation
 
@@ -76,10 +85,11 @@ MAX_BATCH_SIZE=32 make triton-prepare
 
 ## RunPod
 
-RunPod Pods are already containers and do not support nested Docker Compose.
-Use the direct instructions in
-[`deploy/runpod/README.md`](../deploy/runpod/README.md). Use one pod/backend
-session at a time and retain `/workspace` on a network volume.
+RunPod Pods are already containers and usually cannot nest Docker. Use the
+direct instructions in [`deploy/runpod/README.md`](../deploy/runpod/README.md).
+Use one pod/backend session at a time and retain `/workspace` on a network
+volume. If your provider gives a real Docker host (not a nested pod), the
+plain-`docker` Make targets above work without Compose.
 
 ## Validation before publishing
 
