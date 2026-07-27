@@ -68,14 +68,11 @@ ARTIFACT_DIR=/workspace/artifacts/triton \
   ./scripts/triton/build_whisper_engines.sh
 ```
 
-Start Triton:
+Start Triton (foreground; use `scripts/triton/serve.sh`, not NVIDIA's
+`launch_triton_server.py`, which Popen-exits and cannot be a container PID 1):
 
 ```bash
-python3 /opt/TensorRT-LLM/triton_backend/scripts/launch_triton_server.py \
-  --world_size 1 \
-  --model_repo /workspace/artifacts/triton/model_repo \
-  --tensorrt_llm_model_name tensorrt_llm,whisper_bls \
-  --multimodal_gpu0_cuda_mem_pool_bytes 300000000
+./scripts/triton/serve.sh
 ```
 
 In another terminal:

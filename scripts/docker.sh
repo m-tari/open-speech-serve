@@ -213,18 +213,16 @@ case "${cmd}" in
   up-triton)
     ensure_dirs
     rm_container "${CONTAINER_TRITON}"
+    # serve.sh execs mpirun+tritonserver (launch_triton_server.py Popen-exits).
     docker run -d --name "${CONTAINER_TRITON}" --gpus all --ipc=host \
       -p 8003:8000 \
       -p 8004:8001 \
       -p 8005:8002 \
       -v "${ARTIFACTS_HOST}:/workspace/artifacts/triton" \
-      --entrypoint python3 \
+      -v "${ROOT}/scripts/triton:/workspace/open-speech-serve/scripts/triton:ro" \
+      --entrypoint bash \
       "${TRITON_IMAGE_LOCAL}" \
-      /opt/TensorRT-LLM/triton_backend/scripts/launch_triton_server.py \
-      --world_size 1 \
-      --model_repo /workspace/artifacts/triton/model_repo \
-      --tensorrt_llm_model_name tensorrt_llm,whisper_bls \
-      --multimodal_gpu0_cuda_mem_pool_bytes 300000000
+      /workspace/open-speech-serve/scripts/triton/serve.sh
     ;;
   stop-vllm)
     stop_named "${CONTAINER_VLLM}"
