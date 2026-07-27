@@ -101,8 +101,10 @@ plain-`docker` Make targets above work without Compose.
 
 ## Validation before publishing
 
-1. Confirm `/v1/models` reports the exact model for vLLM/SGLang, or Triton
-   reports `whisper_bls` ready.
+1. Confirm a real transcription smoke succeeds for vLLM/SGLang
+   (`POST /v1/audio/transcriptions` with `data/tone16k.wav`), or Triton
+   reports `whisper_bls` ready. `make v2-comparison` waits on that smoke
+   before remote cells.
 2. Run concurrency 1 first and verify WER is comparable.
 3. Run paired serialized/concurrent cells at 8 and 32.
 4. Inspect errors in every JSON result; do not report a throughput number from

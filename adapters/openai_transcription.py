@@ -52,8 +52,8 @@ class OpenAITranscriptionAdapter(FrameworkAdapter):
         self._server_models: list[str] = []
 
     def load(self) -> None:
-        health = self._client.get("/health")
-        health.raise_for_status()
+        # Use /v1/models for readiness. SGLang's /health stays 503 during
+        # Starting (and Whisper's default health generate probe is unreliable).
         models = self._client.get("/v1/models")
         models.raise_for_status()
         payload = models.json()

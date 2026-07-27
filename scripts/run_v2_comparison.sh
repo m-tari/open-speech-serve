@@ -53,6 +53,40 @@ raise SystemExit(f"{name} did not become ready: {last_error}")
 PY
 }
 
+# Ready only when ASR works (avoids false ready from /health or /v1/models).
+wait_transcription() {
+  local base_url="$1"
+  local name="$2"
+  local wav="${3:-data/tone16k.wav}"
+  local model="${4:-openai/whisper-large-v3-turbo}"
+  local timeout_s="${5:-600}"
+  local deadline=$((SECONDS + timeout_s))
+  local out last_error="not started"
+
+  [[ -f "${wav}" ]] || {
+    echo "${name} smoke: missing ${wav}; run prepare first" >&2
+    exit 2
+  }
+
+  while (( SECONDS < deadline )); do
+    if out="$(curl -sS --max-time 60 \
+      -H "Authorization: Bearer not-needed" \
+      -F "file=@${wav};type=audio/wav" \
+      -F "model=${model}" \
+      -F "language=en" \
+      -F "response_format=json" \
+      "${base_url%/}/v1/audio/transcriptions" 2>&1)" \
+      && [[ "${out}" == *'"text"'* ]]; then
+      echo "${name} transcription smoke ok"
+      return 0
+    fi
+    last_error="${out}"
+    sleep 5
+  done
+  echo "${name} transcription smoke failed: ${last_error}" >&2
+  exit 1
+}
+
 run_remote_cells() {
   local make_target="$1"
   local prefix="$2"
@@ -76,13 +110,13 @@ make gpu-sweep \
 
 echo "== Running vLLM concurrent cells =="
 "${DOCKER[@]}" up-vllm
-wait_http "http://127.0.0.1:8001/health" "vLLM"
+wait_transcription "http://127.0.0.1:8001" "vLLM"
 run_remote_cells "vllm-cell" "vllm_turbo_l4"
 "${DOCKER[@]}" stop-vllm
 
 echo "== Running SGLang concurrent cells =="
 "${DOCKER[@]}" up-sglang
-wait_http "http://127.0.0.1:8002/v1/models" "SGLang"
+wait_transcription "http://127.0.0.1:8002" "SGLang"
 run_remote_cells "sglang-cell" "sglang_turbo_l4"
 "${DOCKER[@]}" stop-sglang
 

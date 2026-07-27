@@ -19,8 +19,6 @@ def test_openai_adapter_health_model_validation_and_transcription(tmp_path):
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
-        if request.url.path == "/health":
-            return httpx.Response(200, text="ok")
         if request.url.path == "/v1/models":
             return httpx.Response(
                 200,
@@ -49,7 +47,6 @@ def test_openai_adapter_health_model_validation_and_transcription(tmp_path):
     assert result.text == "hello world"
     assert result.audio_duration_s == pytest.approx(1.0, abs=0.01)
     assert [r.url.path for r in requests] == [
-        "/health",
         "/v1/models",
         "/v1/audio/transcriptions",
     ]
@@ -57,8 +54,6 @@ def test_openai_adapter_health_model_validation_and_transcription(tmp_path):
 
 def test_openai_adapter_rejects_wrong_model():
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/health":
-            return httpx.Response(200)
         return httpx.Response(200, json={"data": [{"id": "other-model"}]})
 
     adapter = OpenAITranscriptionAdapter(
@@ -92,7 +87,7 @@ def test_openai_adapter_rejects_missing_text(tmp_path):
         adapter.transcribe(_wav(tmp_path))
 
 
-def test_openai_adapter_propagates_health_failure():
+def test_openai_adapter_propagates_models_failure():
     adapter = OpenAITranscriptionAdapter(
         model="large-v3-turbo",
         framework_name="vllm",
