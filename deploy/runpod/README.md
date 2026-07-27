@@ -71,7 +71,7 @@ ARTIFACT_DIR=/workspace/artifacts/triton \
 Start Triton:
 
 ```bash
-python3 /opt/TensorRT-LLM/tensorrt_llm/triton_backend/scripts/launch_triton_server.py \
+python3 /opt/TensorRT-LLM/triton_backend/scripts/launch_triton_server.py \
   --world_size 1 \
   --model_repo /workspace/artifacts/triton/model_repo \
   --tensorrt_llm_model_name tensorrt_llm,whisper_bls \

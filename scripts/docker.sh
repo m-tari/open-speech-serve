@@ -220,7 +220,7 @@ case "${cmd}" in
       -v "${ARTIFACTS_HOST}:/workspace/artifacts/triton" \
       --entrypoint python3 \
       "${TRITON_IMAGE_LOCAL}" \
-      /opt/TensorRT-LLM/tensorrt_llm/triton_backend/scripts/launch_triton_server.py \
+      /opt/TensorRT-LLM/triton_backend/scripts/launch_triton_server.py \
       --world_size 1 \
       --model_repo /workspace/artifacts/triton/model_repo \
       --tensorrt_llm_model_name tensorrt_llm,whisper_bls \
