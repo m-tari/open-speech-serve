@@ -13,6 +13,19 @@ Inspired by [whisper-serving-bench](https://github.com/dyl5051/whisper-serving-b
 | Streaming TTFS | no                    | yes                |
 | Docker-first   | yes                   | yes                |
 
+## Results
+
+On one RTX 6000 Ada with `large-v3-turbo` (FP16), concurrent serving throughput
+ranks **TensorRT-LLM > vLLM ≫ SGLang (c1/c8) > HF ≈ faster-whisper**. In-process
+baselines stay ~30× realtime; engineered servers reach ~250–310× before
+saturating.
+
+Full matrix, plots, and notes: [docs/RESULTS.md](docs/RESULTS.md) ·
+[results/published/gpu_sweep.md](results/published/gpu_sweep.md).
+
+SGLang at concurrency 32 is **invalid** (experimental Whisper path; server
+timeout / self-kill under load) — see the results doc.
+
 ## Quick start (Docker / CPU)
 
 ```bash
@@ -141,7 +154,8 @@ plot
 # or: make plot
 ```
 
-Published plots: [results/published/gpu_sweep.md](results/published/gpu_sweep.md).
+Published plots and writeup: [docs/RESULTS.md](docs/RESULTS.md),
+[results/published/gpu_sweep.md](results/published/gpu_sweep.md).
 
 ## Layout
 
@@ -151,7 +165,7 @@ bench/        # manifest, normalize, WER, metrics, loadgen, harness
 streaming/    # FastAPI WebSocket server + TTFS client
 configs/      # cell YAMLs + sweeps
 scripts/      # prepare_data, run_cell, run_sweep, analyze, plot_results
-docs/         # methodology + deployment
+docs/         # methodology, deployment, results writeup
 results/published/  # committed plots + summary
 ```
 

@@ -2,8 +2,32 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from collections import defaultdict
 from pathlib import Path
+
+
+def _is_invalid_cell(data: dict) -> bool:
+    """True when a majority of passes failed (e.g. SGLang c32 server crash)."""
+    passes = data.get("passes") or []
+    if not passes:
+        return False
+    failed = sum(1 for p in passes if (p.get("n_errors") or 0) > 0)
+    if failed > len(passes) / 2:
+        return True
+    thr = (data.get("summary") or {}).get("throughput_audio_s_per_wall_s")
+    try:
+        thr_f = float(thr) if thr is not None else None
+    except (TypeError, ValueError):
+        thr_f = None
+    return bool(failed and thr_f is not None and thr_f == 0.0)
+
+
+def _finite(v) -> bool:
+    try:
+        return v is not None and math.isfinite(float(v))
+    except (TypeError, ValueError):
+        return False
 
 
 def _load_gpu_rows(results_dir: Path) -> list[dict]:
@@ -31,6 +55,7 @@ def _load_gpu_rows(results_dir: Path) -> list[dict]:
                 "rtf_p50": summary.get("rtf_p50"),
                 "throughput": summary.get("throughput_audio_s_per_wall_s"),
                 "wer_pooled": summary.get("wer_pooled"),
+                "invalid": _is_invalid_cell(data),
             }
         )
     return rows
@@ -85,23 +110,51 @@ def plot(rows: list[dict], out_path: Path) -> None:
     ]
 
     for ax, key, ylabel, rtf_ref in panels:
+        invalid_legend_added = False
         for framework, series in by_fw.items():
             base_framework = framework.split(" [", 1)[0]
             dispatch_mode = series[0]["dispatch_mode"]
-            xs = [r["concurrency"] for r in series if r.get(key) is not None]
-            ys = [float(r[key]) for r in series if r.get(key) is not None]
-            if not xs:
-                continue
-            ax.plot(
-                xs,
-                ys,
-                marker=markers.get(base_framework, "o"),
-                color=colors.get(base_framework, None),
-                linestyle="-" if dispatch_mode == "concurrent" else "--",
-                linewidth=2,
-                markersize=7,
-                label=framework,
-            )
+            color = colors.get(base_framework, None)
+            marker = markers.get(base_framework, "o")
+
+            valid = [r for r in series if not r.get("invalid") and _finite(r.get(key))]
+            invalid = [r for r in series if r.get("invalid") and _finite(r.get(key))]
+
+            if valid:
+                ax.plot(
+                    [r["concurrency"] for r in valid],
+                    [float(r[key]) for r in valid],
+                    marker=marker,
+                    color=color,
+                    linestyle="-" if dispatch_mode == "concurrent" else "--",
+                    linewidth=2,
+                    markersize=7,
+                    label=framework,
+                )
+
+            if invalid:
+                xs = [r["concurrency"] for r in invalid]
+                ys = [float(r[key]) for r in invalid]
+                ax.scatter(
+                    xs,
+                    ys,
+                    marker="x",
+                    s=90,
+                    color=color,
+                    linewidths=2.5,
+                    zorder=5,
+                    label="invalid (server failure)" if not invalid_legend_added else None,
+                )
+                invalid_legend_added = True
+                for r in invalid:
+                    ax.annotate(
+                        "invalid",
+                        (r["concurrency"], float(r[key])),
+                        textcoords="offset points",
+                        xytext=(6, 6),
+                        fontsize=7,
+                        color=color,
+                    )
         ax.set_xlabel("Concurrency")
         ax.set_ylabel(ylabel)
         ax.set_xticks(sorted({r["concurrency"] for r in rows}))
@@ -133,11 +186,26 @@ def write_summary_md(rows: list[dict], out_path: Path) -> None:
         "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in rows:
-        lines.append(
-            f"| {r['cell']} | {r['framework']} | {r['dispatch_mode']} | {r['concurrency']} | "
-            f"{_fmt(r['latency_p50_s'])} | {_fmt(r['service_p50_s'])} | "
-            f"{_fmt(r['queue_p50_s'])} | {_fmt(r['latency_p95_s'])} | "
-            f"{_fmt(r['rtf_p50'])} | {_fmt(r['throughput'])} | {_fmt(r['wer_pooled'])} |"
+        if r.get("invalid"):
+            lines.append(
+                f"| {r['cell']} | {r['framework']} | {r['dispatch_mode']} | {r['concurrency']} | "
+                f"— | — | — | — | — | invalid | — |"
+            )
+        else:
+            lines.append(
+                f"| {r['cell']} | {r['framework']} | {r['dispatch_mode']} | {r['concurrency']} | "
+                f"{_fmt(r['latency_p50_s'])} | {_fmt(r['service_p50_s'])} | "
+                f"{_fmt(r['queue_p50_s'])} | {_fmt(r['latency_p95_s'])} | "
+                f"{_fmt(r['rtf_p50'])} | {_fmt(r['throughput'])} | {_fmt(r['wer_pooled'])} |"
+            )
+    if any(r.get("invalid") for r in rows):
+        lines.extend(
+            [
+                "",
+                "Rows marked `invalid` had a majority of passes fail (e.g. remote "
+                "server crash). They are plotted with an **x** and are not connected "
+                "into the framework trend line. See [docs/RESULTS.md](../../docs/RESULTS.md).",
+            ]
         )
     lines.extend(
         [
