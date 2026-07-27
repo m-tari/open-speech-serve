@@ -1,7 +1,8 @@
-name: vllm_turbo_l4_c32_concurrent
-framework: vllm
-model: openai/whisper-large-v3-turbo
-base_url: http://localhost:8000
+name: trtllm_turbo_c32_concurrent
+framework: tensorrt_llm
+model: large-v3-turbo
+grpc_url: localhost:8001
+triton_model_name: whisper_bls
 device: cuda
 compute_type: float16
 dispatch_mode: concurrent

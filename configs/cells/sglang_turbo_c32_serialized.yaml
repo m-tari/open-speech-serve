@@ -1,11 +1,11 @@
-name: vllm_turbo_l4_c1_serialized
-framework: vllm
+name: sglang_turbo_c32_serialized
+framework: sglang
 model: openai/whisper-large-v3-turbo
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 device: cuda
 compute_type: float16
 dispatch_mode: serialized
-concurrency: 1
+concurrency: 32
 manifest: data/manifest.jsonl
 language: en
 warmup: 2

@@ -2,18 +2,18 @@
 # remote-serving cells. Collect remote cells one backend session at a time.
 name: v2_comparison
 cells:
-  - configs/cells/hf_turbo_l4_c1.yaml
-  - configs/cells/hf_turbo_l4_c8.yaml
-  - configs/cells/hf_turbo_l4_c32.yaml
-  - configs/cells/fw_turbo_l4_c1.yaml
-  - configs/cells/fw_turbo_l4_c8.yaml
-  - configs/cells/fw_turbo_l4_c32.yaml
-  - configs/cells/vllm_turbo_l4_c1_concurrent.yaml
-  - configs/cells/vllm_turbo_l4_c8_concurrent.yaml
-  - configs/cells/vllm_turbo_l4_c32_concurrent.yaml
-  - configs/cells/sglang_turbo_l4_c1_concurrent.yaml
-  - configs/cells/sglang_turbo_l4_c8_concurrent.yaml
-  - configs/cells/sglang_turbo_l4_c32_concurrent.yaml
-  - configs/cells/trtllm_turbo_l4_c1_concurrent.yaml
-  - configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
-  - configs/cells/trtllm_turbo_l4_c32_concurrent.yaml
+  - configs/cells/hf_turbo_c1.yaml
+  - configs/cells/hf_turbo_c8.yaml
+  - configs/cells/hf_turbo_c32.yaml
+  - configs/cells/fw_turbo_c1.yaml
+  - configs/cells/fw_turbo_c8.yaml
+  - configs/cells/fw_turbo_c32.yaml
+  - configs/cells/vllm_turbo_c1_concurrent.yaml
+  - configs/cells/vllm_turbo_c8_concurrent.yaml
+  - configs/cells/vllm_turbo_c32_concurrent.yaml
+  - configs/cells/sglang_turbo_c1_concurrent.yaml
+  - configs/cells/sglang_turbo_c8_concurrent.yaml
+  - configs/cells/sglang_turbo_c32_concurrent.yaml
+  - configs/cells/trtllm_turbo_c1_concurrent.yaml
+  - configs/cells/trtllm_turbo_c8_concurrent.yaml
+  - configs/cells/trtllm_turbo_c32_concurrent.yaml

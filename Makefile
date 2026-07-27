@@ -1,6 +1,6 @@
 DOCKER := ./scripts/docker.sh
 
-CELL ?= configs/cells/fw_turbo_l4_c1.yaml
+CELL ?= configs/cells/fw_turbo_c1.yaml
 SWEEP ?= configs/sweeps/v1.yaml
 N ?= 25
 RESULTS_DIR ?= results/v2_comparison

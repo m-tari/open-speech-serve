@@ -1,9 +1,9 @@
 # Compact v1 sweep: 2 frameworks × 3 concurrency = 6 GPU cells
 name: v1
 cells:
-  - configs/cells/hf_turbo_l4_c1.yaml
-  - configs/cells/hf_turbo_l4_c8.yaml
-  - configs/cells/hf_turbo_l4_c32.yaml
-  - configs/cells/fw_turbo_l4_c1.yaml
-  - configs/cells/fw_turbo_l4_c8.yaml
-  - configs/cells/fw_turbo_l4_c32.yaml
+  - configs/cells/hf_turbo_c1.yaml
+  - configs/cells/hf_turbo_c8.yaml
+  - configs/cells/hf_turbo_c32.yaml
+  - configs/cells/fw_turbo_c1.yaml
+  - configs/cells/fw_turbo_c8.yaml
+  - configs/cells/fw_turbo_c32.yaml

@@ -39,19 +39,19 @@ Start one backend in terminal 1, then run its cells in terminal 2:
 ```bash
 # vLLM 0.25.1 (builds open-speech-serve:vllm-audio with Whisper audio deps)
 make vllm-up
-make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_serialized.yaml
-make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
+make vllm-cell CELL=configs/cells/vllm_turbo_c8_serialized.yaml
+make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml
 make stop-vllm
 
 # SGLang 0.5.15 (Whisper support is experimental)
 make sglang-up
-make sglang-cell CELL=configs/cells/sglang_turbo_l4_c8_concurrent.yaml
+make sglang-cell CELL=configs/cells/sglang_turbo_c8_concurrent.yaml
 make stop-sglang
 
 # Triton 26.02 + TensorRT-LLM 1.1.0
-make triton-prepare       # builds L4-specific engines; run once
+make triton-prepare       # builds GPU-specific engines; run once
 make triton-up
-make triton-cell CELL=configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
+make triton-cell CELL=configs/cells/trtllm_turbo_c8_concurrent.yaml
 make stop-triton
 ```
 
@@ -90,14 +90,6 @@ architecture, TensorRT-LLM version, precision, or max batch size changes:
 ```bash
 MAX_BATCH_SIZE=32 make triton-prepare
 ```
-
-## RunPod
-
-RunPod Pods are already containers and usually cannot nest Docker. Use the
-direct instructions in [`deploy/runpod/README.md`](../deploy/runpod/README.md).
-Use one pod/backend session at a time and retain `/workspace` on a network
-volume. If your provider gives a real Docker host (not a nested pod), the
-plain-`docker` Make targets above work without Compose.
 
 ## Validation before publishing
 

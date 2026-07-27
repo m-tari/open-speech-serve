@@ -1,4 +1,4 @@
-name: sglang_turbo_l4_c8_concurrent
+name: sglang_turbo_c8_concurrent
 framework: sglang
 model: openai/whisper-large-v3-turbo
 base_url: http://localhost:30000

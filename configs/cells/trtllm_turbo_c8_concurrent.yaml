@@ -1,12 +1,12 @@
-name: trtllm_turbo_l4_c32_serialized
+name: trtllm_turbo_c8_concurrent
 framework: tensorrt_llm
 model: large-v3-turbo
 grpc_url: localhost:8001
 triton_model_name: whisper_bls
 device: cuda
 compute_type: float16
-dispatch_mode: serialized
-concurrency: 32
+dispatch_mode: concurrent
+concurrency: 8
 manifest: data/manifest.jsonl
 language: en
 warmup: 2

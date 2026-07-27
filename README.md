@@ -8,7 +8,7 @@ Inspired by [whisper-serving-bench](https://github.com/dyl5051/whisper-serving-b
 |                | whisper-serving-bench | open-speech-serve  |
 | -------------- | --------------------- | ------------------ |
 | Frameworks     | 5                     | 5                  |
-| GPUs           | A100 + L4             | 1 (L4 recommended) |
+| GPUs           | multi-GPU             | 1                  |
 | Concurrency    | 1/8/32/64/128         | 1/8/32             |
 | Streaming TTFS | no                    | yes                |
 | Docker-first   | yes                   | yes                |
@@ -35,8 +35,6 @@ Docker workflows use plain `docker` via [`scripts/docker.sh`](scripts/docker.sh)
 
 Needs a GPU machine with Docker and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
-RunPod Pods usually cannot nest Docker; use the direct workflow in
-[deploy/runpod/README.md](deploy/runpod/README.md) there.
 
 1. **Clone and enter the repo**
 
@@ -66,8 +64,8 @@ make gpu-prepare                 # override sample count with N=50
 5. **Run a cell** (or the full sweep)
 
 ```bash
-make gpu-cell                    # default: configs/cells/fw_turbo_l4_c1.yaml
-make gpu-cell CELL=configs/cells/hf_turbo_l4_c8.yaml
+make gpu-cell                    # default: configs/cells/fw_turbo_c1.yaml
+make gpu-cell CELL=configs/cells/hf_turbo_c8.yaml
 make gpu-sweep                   # full 6-cell v1 matrix
 ```
 
@@ -109,20 +107,20 @@ To run or debug one backend manually:
 ```bash
 # vLLM
 make vllm-up
-make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
+make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml
 make vllm-sweep
 make stop-vllm
 
 # SGLang (experimental Whisper path)
 make sglang-up
-make sglang-cell CELL=configs/cells/sglang_turbo_l4_c8_concurrent.yaml
+make sglang-cell CELL=configs/cells/sglang_turbo_c8_concurrent.yaml
 make sglang-sweep
 make stop-sglang
 
 # TensorRT-LLM/Triton (prepare engines once on the target GPU)
 make triton-prepare
 make triton-up
-make triton-cell CELL=configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
+make triton-cell CELL=configs/cells/trtllm_turbo_c8_concurrent.yaml
 make triton-sweep
 make stop-triton
 ```
@@ -133,7 +131,7 @@ concurrent mode lets the serving engine batch/schedule requests. Existing
 HF/faster-whisper adapters are serialized-only because their in-process pipeline
 objects are not safely concurrent.
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker and RunPod instructions.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Docker deployment instructions.
 
 Plot CUDA cell results (writes `results/published/gpu_sweep.png` + `.md`):
 

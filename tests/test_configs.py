@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_all_v2_cell_configs_validate():
-    paths = sorted((ROOT / "configs" / "cells").glob("*_turbo_l4_c*_*.yaml"))
+    paths = sorted((ROOT / "configs" / "cells").glob("*_turbo_c*_*.yaml"))
     assert len(paths) == 18
     for path in paths:
         cfg = load_cell_config(path)

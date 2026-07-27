@@ -111,13 +111,13 @@ make gpu-sweep \
 echo "== Running vLLM concurrent cells =="
 "${DOCKER[@]}" up-vllm
 wait_transcription "http://127.0.0.1:8001" "vLLM"
-run_remote_cells "vllm-cell" "vllm_turbo_l4"
+run_remote_cells "vllm-cell" "vllm_turbo"
 "${DOCKER[@]}" stop-vllm
 
 echo "== Running SGLang concurrent cells =="
 "${DOCKER[@]}" up-sglang
 wait_transcription "http://127.0.0.1:8002" "SGLang"
-run_remote_cells "sglang-cell" "sglang_turbo_l4"
+run_remote_cells "sglang-cell" "sglang_turbo"
 "${DOCKER[@]}" stop-sglang
 
 echo "== Preparing and running TensorRT-LLM/Triton cells =="
@@ -126,7 +126,7 @@ if [[ "${SKIP_TRT_PREP}" != "1" ]]; then
 fi
 "${DOCKER[@]}" up-triton
 wait_http "http://127.0.0.1:8003/v2/health/ready" "Triton"
-run_remote_cells "triton-cell" "trtllm_turbo_l4"
+run_remote_cells "triton-cell" "trtllm_turbo"
 "${DOCKER[@]}" stop-triton
 
 echo "== Writing comparison summary and plots =="

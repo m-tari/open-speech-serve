@@ -10,7 +10,7 @@ Compact [whisper-serving-bench](https://github.com/dyl5051/whisper-serving-bench
 |---|---|
 | Frameworks | HF Transformers, faster-whisper, vLLM, SGLang, TensorRT-LLM/Triton |
 | Model | `large-v3-turbo` on GPU; `tiny` for CPU smoke |
-| GPU | one L4 (or whatever `nvidia-smi` reports) |
+| GPU | one GPU (whatever `nvidia-smi` reports) |
 | Concurrency | 1 / 8 / 32 |
 | Dispatch | `serialized` or `concurrent` |
 | Warmup | excluded from aggregates |
@@ -70,7 +70,7 @@ cell config, adapter/server identity, dispatch mode, and per-request records.
 - Exact `openai/whisper-large-v3-turbo` weights (TensorRT uses the equivalent
   OpenAI checkpoint)
 - FP16, English transcription, greedy decoding / beam width 1
-- Same 16 kHz WAV manifest, references, warmup, passes, and one L4
+- Same 16 kHz WAV manifest, references, warmup, passes, and one GPU
 - Same client-side latency boundary and text normalization
 
 SGLang's Whisper path is experimental; publish its WER beside performance.
@@ -83,13 +83,13 @@ built on the target runtime.
 # CPU smoke
 make build && make smoke
 
-# GPU v1 (rented L4)
+# GPU v1
 make gpu-build
 make gpu-prepare
-make gpu-cell CELL=configs/cells/fw_turbo_l4_c1.yaml
+make gpu-cell CELL=configs/cells/fw_turbo_c1.yaml
 make gpu-sweep
 
 # Remote serving cells (server and client in separate terminals)
 make vllm-up
-make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
+make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml
 ```
