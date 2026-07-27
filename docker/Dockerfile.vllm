@@ -1,0 +1,14 @@
+# Stock vllm/vllm-openai omits optional audio extras required by Whisper
+# /v1/audio/transcriptions. Extend with the full vllm[audio] extra set.
+ARG VLLM_BASE_IMAGE=vllm/vllm-openai:v0.25.1
+ARG VLLM_VERSION=0.25.1
+FROM ${VLLM_BASE_IMAGE}
+
+ARG VLLM_VERSION=0.25.1
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m pip install --no-cache-dir "vllm[audio]==${VLLM_VERSION}"

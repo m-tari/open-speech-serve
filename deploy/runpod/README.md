@@ -12,8 +12,10 @@ outside the Pod needs them.
 
 ## vLLM
 
-Create a custom Pod template with image `vllm/vllm-openai:v0.25.1`. Keep the
-container alive with an interactive shell, connect in two terminals, and run:
+Create a custom Pod template with image `vllm/vllm-openai:v0.25.1`.
+`launch_vllm.sh` installs `vllm[audio]` (and system `ffmpeg`/`libsndfile`)
+before serving — stock `vllm-openai` omits those extras. Keep the container
+alive with an interactive shell, connect in two terminals, and run:
 
 ```bash
 # terminal 1

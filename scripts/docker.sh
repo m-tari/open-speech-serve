@@ -9,7 +9,9 @@ CPU_IMAGE="${CPU_IMAGE:-open-speech-serve:cpu}"
 GPU_IMAGE="${GPU_IMAGE:-open-speech-serve:gpu}"
 BENCH_IMAGE="${BENCH_IMAGE:-open-speech-serve:bench}"
 TRITON_IMAGE_LOCAL="${TRITON_IMAGE_LOCAL:-open-speech-serve:triton-whisper}"
-VLLM_IMAGE="${VLLM_IMAGE:-vllm/vllm-openai:v0.25.1}"
+VLLM_BASE_IMAGE="${VLLM_BASE_IMAGE:-vllm/vllm-openai:v0.25.1}"
+VLLM_IMAGE="${VLLM_IMAGE:-open-speech-serve:vllm-audio}"
+VLLM_VERSION="${VLLM_VERSION:-0.25.1}"
 SGLANG_IMAGE="${SGLANG_IMAGE:-lmsysorg/sglang:v0.5.15}"
 TRITON_BASE_IMAGE="${TRITON_IMAGE:-nvcr.io/nvidia/tritonserver:26.02-trtllm-python-py3}"
 TRTLLM_VERSION="${TRTLLM_VERSION:-v1.1.0}"
@@ -30,7 +32,7 @@ usage() {
 Usage: scripts/docker.sh <command> [args...]
 
 Build:
-  build-cpu | build-gpu | build-bench | build-triton
+  build-cpu | build-gpu | build-bench | build-vllm | build-triton
 
 CPU / GPU local images:
   run-cpu ENTRYPOINT [args...]
@@ -43,6 +45,10 @@ Remote backends:
   stop-vllm | stop-sglang | stop-triton
   stop-backends
   triton-prepare
+
+  VLLM_BASE_IMAGE (default vllm/vllm-openai:v0.25.1) is wrapped by
+  build-vllm into VLLM_IMAGE (default open-speech-serve:vllm-audio)
+  with the full vllm[audio] extra set.
 
 Benchmark client (host network → localhost backends):
   run-bench [-e KEY=VAL ...] -- ENTRYPOINT [args...]
@@ -93,6 +99,14 @@ case "${cmd}" in
     ;;
   build-bench)
     docker build -t "${BENCH_IMAGE}" -f docker/Dockerfile.bench .
+    ;;
+  build-vllm)
+    docker build \
+      -t "${VLLM_IMAGE}" \
+      -f docker/Dockerfile.vllm \
+      --build-arg "VLLM_BASE_IMAGE=${VLLM_BASE_IMAGE}" \
+      --build-arg "VLLM_VERSION=${VLLM_VERSION}" \
+      .
     ;;
   build-triton)
     docker build \
@@ -166,6 +180,7 @@ case "${cmd}" in
 
   up-vllm)
     ensure_dirs
+    "${DOCKER_SH}" build-vllm
     rm_container "${CONTAINER_VLLM}"
     docker run -d --name "${CONTAINER_VLLM}" --gpus all --ipc=host \
       -p 8001:8000 \

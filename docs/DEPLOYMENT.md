@@ -37,7 +37,7 @@ because its engines must match the target GPU and runtime.
 Start one backend in terminal 1, then run its cells in terminal 2:
 
 ```bash
-# vLLM 0.25.1
+# vLLM 0.25.1 (builds open-speech-serve:vllm-audio with Whisper audio deps)
 make vllm-up
 make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_serialized.yaml
 make vllm-cell CELL=configs/cells/vllm_turbo_l4_c8_concurrent.yaml
@@ -55,8 +55,16 @@ make triton-cell CELL=configs/cells/trtllm_turbo_l4_c8_concurrent.yaml
 make stop-triton
 ```
 
-Image tags can be overridden with `VLLM_IMAGE`, `SGLANG_IMAGE`, `TRITON_IMAGE`,
-and `TRTLLM_VERSION`. Record overrides with published results.
+Image tags can be overridden with `VLLM_IMAGE`, `VLLM_BASE_IMAGE`,
+`SGLANG_IMAGE`, `TRITON_IMAGE`, and `TRTLLM_VERSION`. Record overrides with
+published results.
+
+`make vllm-up` / `build-vllm` wraps `VLLM_BASE_IMAGE` (default
+`vllm/vllm-openai:v0.25.1`) into `VLLM_IMAGE` (default
+`open-speech-serve:vllm-audio`) and installs the full `vllm[audio]` extra
+set (plus system `ffmpeg`/`libsndfile`). Stock `vllm-openai` omits those
+extras, which makes `/v1/audio/transcriptions` return HTTP 400 for valid WAV
+files.
 
 Host endpoints (bench client uses `--network host`):
 

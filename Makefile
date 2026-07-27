@@ -9,10 +9,13 @@ SKIP_TRT_PREP ?= 0
 
 .PHONY: build prepare smoke mock server ttfs stop-server analyze plot \
 	gpu-build gpu-prepare gpu-cell gpu-sweep gpu-server gpu-ttfs stop-gpu-server \
-	vllm-up vllm-cell vllm-sweep stop-vllm \
+	build-vllm vllm-up vllm-cell vllm-sweep stop-vllm \
 	sglang-up sglang-cell sglang-sweep stop-sglang \
 	triton-build triton-prepare triton-up triton-cell triton-sweep stop-triton \
 	stop-backends v2-comparison
+
+build-vllm:
+	$(DOCKER) build-vllm
 
 build:
 	$(DOCKER) build-cpu
