@@ -128,13 +128,23 @@ make v2-comparison
 Writes `results/v2_comparison/summary.md` and
 `results/v2_comparison/published/gpu_sweep.{md,png}`.
 
-Per-backend debug:
+Per-backend debug (bring up → run cell → tear down):
 
 ```bash
-make vllm-up    && make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml    && make stop-vllm
-make sglang-up  && make sglang-cell CELL=configs/cells/sglang_turbo_c8_concurrent.yaml && make stop-sglang
+# vLLM
+make vllm-up
+make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml
+make stop-vllm
+
+# SGLang
+make sglang-up
+make sglang-cell CELL=configs/cells/sglang_turbo_c8_concurrent.yaml
+make stop-sglang
+
+# Triton / TensorRT-LLM
 make triton-prepare && make triton-up
-make triton-cell CELL=configs/cells/trtllm_turbo_c8_concurrent.yaml && make stop-triton
+make triton-cell CELL=configs/cells/trtllm_turbo_c8_concurrent.yaml
+make stop-triton
 ```
 
 Results land in `./results`; data in `./data`. Deployment details:
@@ -153,8 +163,8 @@ plot   # or: make plot → results/published/gpu_sweep.{png,md}
 - **Service latency / queue wait** split for serialized-vs-concurrent analysis
 - **RTF** = wall_s / audio_s (lower is faster)
 - **Throughput** = total audio seconds / wall seconds under concurrency
-- **WER** when references exist (shared normalizer)
-- **TTFS** for streaming: EOS → final transcript
+- **WER** (word error rate) when references exist (shared normalizer)
+- **TTFS** (time to final speech) for streaming: client `EOS` → server `final` transcript
 
 ## Layout
 
