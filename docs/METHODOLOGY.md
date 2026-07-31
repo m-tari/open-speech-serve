@@ -52,15 +52,20 @@ This is **chunked re-decode**, not incremental encoder-state streaming. That lim
 
 Optional `nvidia-smi` sampling during **timed passes only** (after warmup).
 Enable with `--gpu-telemetry` / `OSS_GPU_TELEMETRY=1` (or `gpu_telemetry: true`
-in YAML). Use `--passes 1` to keep telemetry sweeps short.
+in YAML).
+
+Defaults for a meaningful util window on fast engines: **N=200** utterances and
+**3 passes** (`TELEMETRY_N` / `TELEMETRY_PASSES`). Short manifests with
+`--passes 1` under-sample concurrent c8 (wall time under 1s).
 
 Every 0.5s the harness records GPU util, memory util, memory used, and power.
 CSVs land under `results/<dir>/gpu_telemetry/<cell>.csv`; aggregates attach as
 `gpu_telemetry` on the cell JSON.
 
 ```bash
-make gpu-telemetry          # reuses standard HF/vLLM/TRT cells
+make gpu-telemetry          # N=200, passes=3; reuses standard HF/vLLM/TRT cells
 make plot-gpu-telemetry
+# override: make gpu-telemetry TELEMETRY_N=400 TELEMETRY_PASSES=5
 ```
 
 Outputs: `gpu_util_vs_concurrency.{png,md}` and `gpu_util_vs_time_c8.png`

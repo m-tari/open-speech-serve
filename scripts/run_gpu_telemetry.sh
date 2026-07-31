@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# HF / vLLM / TensorRT-LLM cells with nvidia-smi telemetry (1 pass each).
+# HF / vLLM / TensorRT-LLM cells with nvidia-smi telemetry.
+# Default N=200 and passes=3 so fast engines still yield a long enough
+# sampling window for meaningful util-vs-concurrency / util-vs-time plots.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
-N="${N:-25}"
+N="${N:-200}"
+PASSES="${PASSES:-3}"
 RESULTS_DIR="${RESULTS_DIR:-results/gpu_telemetry}"
 SKIP_PREP="${SKIP_PREP:-0}"
 SKIP_TRT_PREP="${SKIP_TRT_PREP:-0}"
 DOCKER=(./scripts/docker.sh)
-FLAGS="--results-dir ${RESULTS_DIR} --gpu-telemetry --passes 1"
+FLAGS="--results-dir ${RESULTS_DIR} --gpu-telemetry --passes ${PASSES}"
 
 case "${RESULTS_DIR}" in
   results | results/*) ;;
@@ -57,7 +60,7 @@ wait_transcription() {
   echo "${name} transcription smoke failed: ${err}" >&2; exit 1
 }
 
-echo "== Prepare =="
+echo "== Prepare (N=${N}, passes=${PASSES}) =="
 "${DOCKER[@]}" build-bench
 if [[ "${SKIP_PREP}" != "1" ]]; then
   make gpu-build

@@ -5,6 +5,8 @@ SWEEP ?= configs/sweeps/v1.yaml
 N ?= 25
 RESULTS_DIR ?= results/v2_comparison
 GPU_TELEMETRY_DIR ?= results/gpu_telemetry
+TELEMETRY_N ?= 200
+TELEMETRY_PASSES ?= 3
 SKIP_PREP ?= 0
 SKIP_TRT_PREP ?= 0
 
@@ -123,8 +125,9 @@ v2-comparison:
 		./scripts/run_v2_comparison.sh
 
 # GPU util vs concurrency (HF + vLLM + TensorRT-LLM, nvidia-smi during timed passes)
+# Defaults N=200 / passes=3 so engine cells yield ≥15s of util samples.
 gpu-telemetry:
-	N=$(N) RESULTS_DIR=$(GPU_TELEMETRY_DIR) \
+	N=$(TELEMETRY_N) PASSES=$(TELEMETRY_PASSES) RESULTS_DIR=$(GPU_TELEMETRY_DIR) \
 		SKIP_PREP=$(SKIP_PREP) SKIP_TRT_PREP=$(SKIP_TRT_PREP) \
 		./scripts/run_gpu_telemetry.sh
 

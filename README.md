@@ -160,8 +160,9 @@ plot   # or: make plot → results/published/gpu_sweep.{png,md}
 ### GPU telemetry
 
 ```bash
-make gpu-telemetry          # standard cells + nvidia-smi during timed passes
+make gpu-telemetry          # N=200, passes=3 + nvidia-smi during timed passes
 make plot-gpu-telemetry     # → util vs concurrency + util vs time (c8)
+# optional: make gpu-telemetry TELEMETRY_N=400 TELEMETRY_PASSES=5
 ```
 
 See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).

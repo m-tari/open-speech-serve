@@ -94,8 +94,9 @@ MAX_BATCH_SIZE=32 make triton-prepare
 ## GPU telemetry
 
 `make gpu-telemetry` reuses the standard HF / vLLM / TensorRT-LLM cells with
-`--gpu-telemetry --passes 1` into `results/gpu_telemetry/`. The bench client
-uses `--gpus all` so `nvidia-smi` can observe the same device as the server.
+`--gpu-telemetry --passes 3` and prepares **N=200** by default (override with
+`TELEMETRY_N` / `TELEMETRY_PASSES`). The bench client uses `--gpus all` so
+`nvidia-smi` can observe the same device as the server.
 
 `make plot-gpu-telemetry` writes util-vs-concurrency and util-vs-time (c8)
 figures — no Nsight GUI required.
@@ -103,6 +104,7 @@ figures — no Nsight GUI required.
 ```bash
 make gpu-telemetry
 make plot-gpu-telemetry
+# optional: make gpu-telemetry TELEMETRY_N=400 TELEMETRY_PASSES=5
 ```
 
 ## Validation before publishing
