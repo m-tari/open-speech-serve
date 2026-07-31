@@ -263,7 +263,9 @@ case "${cmd}" in
     done
     entrypoint="${1:?entrypoint required after --}"
     shift || true
-    docker run --rm --network host \
+    # --gpus all so nvidia-smi telemetry can observe the same device the
+    # remote server uses (bench client itself does not allocate CUDA memory).
+    docker run --rm --gpus all --network host \
       "${app_mounts[@]}" \
       "${docker_args[@]}" \
       --entrypoint "${entrypoint}" \

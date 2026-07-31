@@ -63,6 +63,37 @@ Raw cell JSON and the machine-generated table live under
 - **SGLang c1/c8** are stable but ~3–4× slower than vLLM. The Whisper serving
   path is still experimental upstream.
 
+## GPU util vs concurrency (telemetry)
+
+Run `make gpu-telemetry` then `make plot-gpu-telemetry`. Fill this section from
+`results/gpu_telemetry/published/gpu_util_vs_concurrency.md` after the sweep.
+
+**Hypothesis:** vLLM/TRT throughput flattens c8→c32 because mean GPU util is
+already near saturation at c8; HF stays lower-util while e2e grows from client
+queue wait.
+
+| framework | mode | conc | throughput | util_gpu_mean % | mem_used_mib_max |
+| --- | --- | ---: | ---: | ---: | ---: |
+| hf_transformers | serialized | 1 | — | — | — |
+| hf_transformers | serialized | 8 | — | — | — |
+| hf_transformers | serialized | 32 | — | — | — |
+| vllm | concurrent | 1 | — | — | — |
+| vllm | concurrent | 8 | — | — | — |
+| vllm | concurrent | 32 | — | — | — |
+| tensorrt_llm | concurrent | 1 | — | — | — |
+| tensorrt_llm | concurrent | 8 | — | — | — |
+| tensorrt_llm | concurrent | 32 | — | — | — |
+
+Plots (after run):
+
+- `results/gpu_telemetry/published/gpu_util_vs_concurrency.png`
+- `results/gpu_telemetry/published/gpu_util_vs_time_c8.png` — HF serialized c8
+  vs vLLM concurrent c8 util over time (duty cycle)
+
+**Expected qualitative contrast on util-vs-time:** HF shows bursty util with
+idle gaps under serialization; vLLM stays denser/higher under concurrent load.
+Describe duty cycle, not “continuous batching proven.”
+
 ## SGLang concurrency 32 (invalid)
 
 `sglang_turbo_c32_concurrent` is **not a valid datapoint**. Under 32 in-flight

@@ -12,6 +12,9 @@ data/
 results/*
 !results/.gitkeep
 !results/published/
+!results/gpu_telemetry/
+results/gpu_telemetry/*
+!results/gpu_telemetry/published/
 artifacts/
 .cache/
 *.wav

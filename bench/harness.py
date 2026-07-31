@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from adapters.registry import get_adapter
+from bench.gpu_telemetry import GpuTelemetrySampler, want_gpu_telemetry
 from bench.loadgen import timed_load
 from bench.metrics import AggregateMetrics, RequestRecord, aggregate
 from bench.normalize import load_manifest
@@ -93,7 +94,7 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
 
     reserved = {
         "name", "framework", "model", "device", "compute_type", "concurrency",
-        "manifest", "warmup", "passes", "limit", "dispatch_mode",
+        "manifest", "warmup", "passes", "limit", "dispatch_mode", "gpu_telemetry",
     }
     adapter_options = {k: v for k, v in cfg.items() if k not in reserved}
     if os.environ.get("OSS_BASE_URL"):
@@ -109,7 +110,7 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
     )
     adapter.load()
 
-    # Warmup — excluded from aggregates.
+    # Warmup — excluded from aggregates and from GPU telemetry.
     warmup_items = items[: min(warmup, len(items))]
     if warmup_items:
         timed_load(
@@ -120,18 +121,42 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
             dispatch_mode="serialized",
         )
 
+    cell_name = cfg.get("name") or f"{adapter.name}_{cfg['model']}_c{concurrency}"
+    if "dispatch_mode" in cfg and not str(cell_name).endswith(f"_{dispatch_mode}"):
+        cell_name = f"{cell_name}_{dispatch_mode}"
+
+    results_dir.mkdir(parents=True, exist_ok=True)
+    sampler: GpuTelemetrySampler | None = None
+    gpu_telemetry_summary: dict[str, Any] | None = None
+    if want_gpu_telemetry(cfg):
+        csv_path = results_dir / "gpu_telemetry" / f"{cell_name}.csv"
+        sampler = GpuTelemetrySampler(csv_path)
+        if not sampler.start():
+            gpu_telemetry_summary = sampler.stop()
+            sampler = None
+
     all_records: list[RequestRecord] = []
     pass_metrics: list[AggregateMetrics] = []
-    for p in range(passes):
-        records, wall = timed_load(
-            adapter,
-            items,
-            concurrency,
-            pass_idx=p,
-            dispatch_mode=dispatch_mode,
+    try:
+        for p in range(passes):
+            records, wall = timed_load(
+                adapter,
+                items,
+                concurrency,
+                pass_idx=p,
+                dispatch_mode=dispatch_mode,
+            )
+            all_records.extend(records)
+            pass_metrics.append(aggregate(records, wall))
+    finally:
+        if sampler is not None:
+            gpu_telemetry_summary = sampler.stop()
+
+    if gpu_telemetry_summary is not None:
+        # Relative to results_dir so host/container mounts resolve the same way.
+        gpu_telemetry_summary["csv_path"] = str(
+            Path("gpu_telemetry") / f"{cell_name}.csv"
         )
-        all_records.extend(records)
-        pass_metrics.append(aggregate(records, wall))
 
     # Report medians across passes (whisper-serving-bench style).
     def _median(attr: str) -> float:
@@ -160,9 +185,6 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
         "dispatch_mode": dispatch_mode,
     }
 
-    cell_name = cfg.get("name") or f"{adapter.name}_{cfg['model']}_c{concurrency}"
-    if "dispatch_mode" in cfg and not str(cell_name).endswith(f"_{dispatch_mode}"):
-        cell_name = f"{cell_name}_{dispatch_mode}"
     payload = {
         "cell": cell_name,
         "config": {
@@ -177,8 +199,9 @@ def run_cell(cfg: dict[str, Any], results_dir: Path) -> dict[str, Any]:
         "passes": [m.to_dict() for m in pass_metrics],
         "records": [asdict(r) for r in all_records],
     }
+    if gpu_telemetry_summary is not None:
+        payload["gpu_telemetry"] = gpu_telemetry_summary
 
-    results_dir.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = results_dir / f"{cell_name}_{stamp}.json"
     out.write_text(json.dumps(payload, indent=2))

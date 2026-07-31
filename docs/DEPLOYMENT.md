@@ -91,6 +91,20 @@ architecture, TensorRT-LLM version, precision, or max batch size changes:
 MAX_BATCH_SIZE=32 make triton-prepare
 ```
 
+## GPU telemetry
+
+`make gpu-telemetry` reuses the standard HF / vLLM / TensorRT-LLM cells with
+`--gpu-telemetry --passes 1` into `results/gpu_telemetry/`. The bench client
+uses `--gpus all` so `nvidia-smi` can observe the same device as the server.
+
+`make plot-gpu-telemetry` writes util-vs-concurrency and util-vs-time (c8)
+figures — no Nsight GUI required.
+
+```bash
+make gpu-telemetry
+make plot-gpu-telemetry
+```
+
 ## Validation before publishing
 
 1. Confirm a real transcription smoke succeeds for vLLM/SGLang
@@ -102,3 +116,5 @@ MAX_BATCH_SIZE=32 make triton-prepare
 4. Inspect errors in every JSON result; do not report a throughput number from
    a run with failed requests.
 5. Run `plot` to regenerate the grouped dispatch-mode plots.
+6. For util/plateau writeups, confirm each telemetry JSON has
+   `gpu_telemetry.n_samples > 0` before plotting.

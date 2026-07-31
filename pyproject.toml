@@ -32,6 +32,7 @@ cell = "scripts.run_cell:main"
 sweep = "scripts.run_sweep:main"
 analyze = "scripts.analyze:main"
 plot = "scripts.plot_results:main"
+plot-gpu-telemetry = "scripts.plot_gpu_telemetry:main"
 stream = "streaming.server:main"
 ttfs = "streaming.ttfs_client:main"
 

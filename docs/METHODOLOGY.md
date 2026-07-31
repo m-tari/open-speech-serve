@@ -48,6 +48,24 @@ Protocol: raw PCM s16le mono @ 16 kHz over WebSocket; server emits `partial` eve
 
 This is **chunked re-decode**, not incremental encoder-state streaming. That limitation is intentional and documented — matching the honesty bar of whisper-serving-bench, while still measuring a real serving path.
 
+### GPU telemetry
+
+Optional `nvidia-smi` sampling during **timed passes only** (after warmup).
+Enable with `--gpu-telemetry` / `OSS_GPU_TELEMETRY=1` (or `gpu_telemetry: true`
+in YAML). Use `--passes 1` to keep telemetry sweeps short.
+
+Every 0.5s the harness records GPU util, memory util, memory used, and power.
+CSVs land under `results/<dir>/gpu_telemetry/<cell>.csv`; aggregates attach as
+`gpu_telemetry` on the cell JSON.
+
+```bash
+make gpu-telemetry          # reuses standard HF/vLLM/TRT cells
+make plot-gpu-telemetry
+```
+
+Outputs: `gpu_util_vs_concurrency.{png,md}` and `gpu_util_vs_time_c8.png`
+(HF serialized c8 vs vLLM concurrent c8 duty cycle).
+
 ## What we are not measuring
 
 - True causal / duplex streaming with incremental decoder state
@@ -55,6 +73,7 @@ This is **chunked re-decode**, not incremental encoder-state streaming. That lim
 - Cross-framework TTFS for the remote servers
 - Absolute SOTA WER (weights held constant across frameworks)
 - Cost-per-audio-hour across cloud SKUs (can add in v1.1)
+- Nsight Systems / Nsight Compute traces
 
 ## Text normalization
 
@@ -92,4 +111,8 @@ make gpu-sweep
 # Remote serving cells (server and client in separate terminals)
 make vllm-up
 make vllm-cell CELL=configs/cells/vllm_turbo_c8_concurrent.yaml
+
+# GPU util vs concurrency + util-vs-time duty cycle
+make gpu-telemetry SKIP_PREP=1 SKIP_TRT_PREP=1
+make plot-gpu-telemetry
 ```

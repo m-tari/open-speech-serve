@@ -157,6 +157,15 @@ pip install -e .
 plot   # or: make plot → results/published/gpu_sweep.{png,md}
 ```
 
+### GPU telemetry
+
+```bash
+make gpu-telemetry          # standard cells + nvidia-smi during timed passes
+make plot-gpu-telemetry     # → util vs concurrency + util vs time (c8)
+```
+
+See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+
 ## Metrics
 
 - **Latency** p50 / p95 / p99 (warmup excluded; median across 3 passes)
@@ -165,6 +174,7 @@ plot   # or: make plot → results/published/gpu_sweep.{png,md}
 - **Throughput** = total audio seconds / wall seconds under concurrency
 - **WER** (word error rate) when references exist (shared normalizer)
 - **TTFS** (time to final speech) for streaming: client `EOS` → server `final` transcript
+- **GPU telemetry** (optional): mean/p95 util, peak memory, power during timed passes
 
 ## Layout
 
@@ -173,19 +183,21 @@ adapters/     # local, OpenAI transcription, and Triton clients
 bench/        # manifest, normalize, WER, metrics, loadgen, harness
 streaming/    # FastAPI WebSocket server + TTFS client
 configs/      # cell YAMLs + sweeps
-scripts/      # prepare_data, run_cell, run_sweep, analyze, plot_results
+scripts/      # prepare_data, run_cell, run_sweep, analyze, plot_*
 docs/         # methodology, deployment, results writeup
 results/published/  # committed plots + summary
+results/gpu_telemetry/published/  # util plots
 ```
 
 ## Env knobs
 
-| Variable           | Default                               | Meaning        |
-| ------------------ | ------------------------------------- | -------------- |
-| `OSS_FRAMEWORK`    | `faster_whisper`                      | server backend |
-| `OSS_MODEL`        | `tiny` (CPU) / `large-v3-turbo` (GPU) | Whisper size   |
-| `OSS_DEVICE`       | `cpu` / `cuda`                        | device         |
-| `OSS_COMPUTE_TYPE` | `int8` / `float16`                    | compute type   |
+| Variable            | Default                               | Meaning                                      |
+| ------------------- | ------------------------------------- | -------------------------------------------- |
+| `OSS_FRAMEWORK`     | `faster_whisper`                      | server backend                               |
+| `OSS_MODEL`         | `tiny` (CPU) / `large-v3-turbo` (GPU) | Whisper size                                 |
+| `OSS_DEVICE`        | `cpu` / `cuda`                        | device                                       |
+| `OSS_COMPUTE_TYPE`  | `int8` / `float16`                    | compute type                                 |
+| `OSS_GPU_TELEMETRY` | unset                                 | `1` to sample nvidia-smi during timed passes |
 
 ## License
 

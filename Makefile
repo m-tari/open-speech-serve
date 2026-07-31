@@ -4,6 +4,7 @@ CELL ?= configs/cells/fw_turbo_c1.yaml
 SWEEP ?= configs/sweeps/v1.yaml
 N ?= 25
 RESULTS_DIR ?= results/v2_comparison
+GPU_TELEMETRY_DIR ?= results/gpu_telemetry
 SKIP_PREP ?= 0
 SKIP_TRT_PREP ?= 0
 
@@ -12,7 +13,7 @@ SKIP_TRT_PREP ?= 0
 	build-vllm vllm-up vllm-cell vllm-sweep stop-vllm \
 	sglang-up sglang-cell sglang-sweep stop-sglang \
 	triton-build triton-prepare triton-up triton-cell triton-sweep stop-triton \
-	stop-backends v2-comparison
+	stop-backends v2-comparison gpu-telemetry plot-gpu-telemetry
 
 build-vllm:
 	$(DOCKER) build-vllm
@@ -120,3 +121,14 @@ v2-comparison:
 	N=$(N) RESULTS_DIR=$(RESULTS_DIR) \
 		SKIP_PREP=$(SKIP_PREP) SKIP_TRT_PREP=$(SKIP_TRT_PREP) \
 		./scripts/run_v2_comparison.sh
+
+# GPU util vs concurrency (HF + vLLM + TensorRT-LLM, nvidia-smi during timed passes)
+gpu-telemetry:
+	N=$(N) RESULTS_DIR=$(GPU_TELEMETRY_DIR) \
+		SKIP_PREP=$(SKIP_PREP) SKIP_TRT_PREP=$(SKIP_TRT_PREP) \
+		./scripts/run_gpu_telemetry.sh
+
+plot-gpu-telemetry:
+	$(DOCKER) run-bench -- plot-gpu-telemetry \
+		--results-dir $(GPU_TELEMETRY_DIR) \
+		--out-dir $(GPU_TELEMETRY_DIR)/published
