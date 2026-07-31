@@ -65,34 +65,38 @@ Raw cell JSON and the machine-generated table live under
 
 ## GPU util vs concurrency (telemetry)
 
-Run `make gpu-telemetry` then `make plot-gpu-telemetry`. Fill this section from
-`results/gpu_telemetry/published/gpu_util_vs_concurrency.md` after the sweep.
+From `make gpu-telemetry` on **NVIDIA RTX 6000 Ada** with **N=205**, **3 passes**,
+`nvidia-smi` every 0.5s during timed passes. Full table:
+[`results/gpu_telemetry/published/gpu_util_vs_concurrency.md`](../results/gpu_telemetry/published/gpu_util_vs_concurrency.md).
 
-**Hypothesis:** vLLM/TRT throughput flattens c8→c32 because mean GPU util is
-already near saturation at c8; HF stays lower-util while e2e grows from client
-queue wait.
+| framework | mode | conc | throughput | util_gpu_mean % | util_gpu_p95 % | mem_used_mib_max | samples |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| hf_transformers | serialized | 1 | 32.0 | 38.3 | 56 | 2490 | 285 |
+| hf_transformers | serialized | 8 | 31.9 | 39.8 | 58 | 2604 | 285 |
+| hf_transformers | serialized | 32 | 31.9 | 39.3 | 58 | 3100 | 286 |
+| vllm | concurrent | 1 | 112.4 | 46.4 | 55 | 44544 | 82 |
+| vllm | concurrent | 8 | 278.5 | 82.3 | 100 | 44544 | 33 |
+| vllm | concurrent | 32 | 305.7 | 92.9 | 100 | 44544 | 30 |
+| tensorrt_llm | concurrent | 1 | 174.2 | 71.6 | 79 | 12018 | 55 |
+| tensorrt_llm | concurrent | 8 | 347.0 | 90.0 | 99 | 12050 | 27 |
+| tensorrt_llm | concurrent | 32 | 331.4 | 97.0 | 99 | 12066 | 28 |
 
-| framework | mode | conc | throughput | util_gpu_mean % | mem_used_mib_max |
-| --- | --- | ---: | ---: | ---: | ---: |
-| hf_transformers | serialized | 1 | — | — | — |
-| hf_transformers | serialized | 8 | — | — | — |
-| hf_transformers | serialized | 32 | — | — | — |
-| vllm | concurrent | 1 | — | — | — |
-| vllm | concurrent | 8 | — | — | — |
-| vllm | concurrent | 32 | — | — | — |
-| tensorrt_llm | concurrent | 1 | — | — | — |
-| tensorrt_llm | concurrent | 8 | — | — | — |
-| tensorrt_llm | concurrent | 32 | — | — | — |
+**Findings:**
 
-Plots (after run):
+- **Throughput plateaus near c8 for TensorRT-LLM** (~347→331×) while **vLLM
+  still climbs modestly** c8→c32 (~278→306×) as mean util rises 82%→93%.
+- **GPU util explains the knee:** engines jump from moderate util at c1 to
+  ~82–90% mean / ~99–100% p95 at c8; HF stays ~39% mean under serialization no
+  matter the concurrency.
+- **Memory residency separates the stacks:** HF ~2.5–3.1 GiB, TensorRT-LLM
+  ~12 GiB, vLLM ~44 GiB (`--gpu-memory-utilization 0.90`).
+- **Util-vs-time at c8** contrasts HF’s mid-util series with vLLM’s dense high
+  occupancy — the duty-cycle figure the short N=30 run could not produce.
 
-- `results/gpu_telemetry/published/gpu_util_vs_concurrency.png`
-- `results/gpu_telemetry/published/gpu_util_vs_time_c8.png` — HF serialized c8
-  vs vLLM concurrent c8 util over time (duty cycle)
+Plots:
 
-**Expected qualitative contrast on util-vs-time:** HF shows bursty util with
-idle gaps under serialization; vLLM stays denser/higher under concurrent load.
-Describe duty cycle, not “continuous batching proven.”
+- [`gpu_util_vs_concurrency.png`](../results/gpu_telemetry/published/gpu_util_vs_concurrency.png)
+- [`gpu_util_vs_time_c8.png`](../results/gpu_telemetry/published/gpu_util_vs_time_c8.png)
 
 ## SGLang concurrency 32 (invalid)
 
